@@ -108,23 +108,30 @@ var mountCommand = &cli.Command{
 			Usage: "Enable verbose loggings",
 			Value: false,
 		},
+		&cli.StringFlag{
+			Name: "record",
+		},
 	},
 	Action: func(ctx context.Context, command *cli.Command) error {
-		syscall.Umask(0)
 		if command.Bool("verbose") {
 			initLogging(zerolog.TraceLevel)
 		}
+		syscall.Umask(0)
 
 		faults := slowfs.NewFaultManager()
-
 		server := grpc.NewServer()
 		pb.RegisterSlowFsServer(server, &slowfs.RPC{Faults: faults})
+		fs := slowfs.New(
+			command.String("base-dir"),
+			faults,
+			command.String("record"),
+		)
 
+		// start RPC server
 		listener, err := net.Listen("tcp", command.String("listen"))
 		if err != nil {
 			return err
 		}
-
 		go func() {
 			err := server.Serve(listener)
 			if err != nil {
@@ -132,12 +139,8 @@ var mountCommand = &cli.Command{
 			}
 		}()
 
-		fs := slowfs.SlowFS{
-			BaseDir: command.String("base-dir"),
-			Faults:  faults,
-		}
-
-		host := fuse.NewFileSystemHost(&fs)
+		// mount FUSE
+		host := fuse.NewFileSystemHost(fs)
 		host.SetUseIno(command.Bool("use-ino"))
 		host.Mount(command.String("mountpoint"), []string{})
 
