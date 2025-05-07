@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package slowfs.proto;
+
+option go_package = "github.com/fanyang89/slowfs/pb";
+
+message InjectErrorRequest {
+  string path_re = 1;
+  OpCode op = 2;
+  int32 error_code = 3;
+  float possibility = 4;
+}
+
+message InjectErrorResponse {
+  int32 id = 1;
+}
+
+message InjectLatencyRequest {
+  string path_re = 1;
+  OpCode op = 2;
+  int64 latency_ms = 3;
+  float possibility = 4;
+}
+
+message InjectLatencyResponse {
+  int32 id = 1;
+}
+
+message DeleteFaultRequest {
+  repeated int32 id = 1;
+  bool all = 2;
+  string path = 3;
+}
+
+message DeleteFaultResponse {
+  repeated int32 deleted = 1;
+}
+
+message FaultVariant {
+  int32 id = 1;
+  OpCode op = 2;
+  string path = 3;
+
+  oneof Fault {
+    InjectErrorRequest inject_error_request = 10;
+    InjectLatencyRequest inject_latency_request = 11;
+  }
+}
+
+message Void {}
+
+message ListFaultsResponse {
+  repeated FaultVariant faults = 1;
+}
+
+service SlowFs {
+  rpc InjectError(InjectErrorRequest) returns (InjectErrorResponse);
+  rpc InjectLatency(InjectLatencyRequest) returns (InjectLatencyResponse);
+  rpc DeleteFault(DeleteFaultRequest) returns (DeleteFaultResponse);
+  rpc ListFaults(Void) returns (ListFaultsResponse);
+}
+
+enum OpCode {
+  UNKNOWN = 0;
+  STATFS = 1;
+  MKNOD = 2;
+  MKDIR = 3;
+  UNLINK = 4;
+  RMDIR = 5;
+  LINK = 6;
+  SYMLINK = 7;
+  READLINK = 8;
+  RENAME = 9;
+  CHMOD = 10;
+  CHOWN = 11;
+  UTIMENS = 12;
+  CREATE = 13;
+  OPEN = 14;
+  GETATTR = 15;
+  TRUNCATE = 16;
+  READ = 17;
+  WRITE = 18;
+  RELEASE = 19;
+  FSYNC = 20;
+  OPENDIR = 21;
+  READDIR = 22;
+  RELEASEDIR = 23;
+}
