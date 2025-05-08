@@ -125,8 +125,8 @@ var mountCommand = &cli.Command{
 		syscall.Umask(0)
 
 		faults := slowfs.NewFaultManager()
-		server := grpc.NewServer()
-		pb.RegisterSlowFsServer(server, &slowfs.RPC{Faults: faults})
+		server := grpc.NewServer(grpc.Creds(insecure.NewCredentials()))
+		pb.RegisterSlowFsServer(server, &slowfs.Rpc{Faults: faults})
 		fs := slowfs.New(
 			command.String("base-dir"),
 			faults,
