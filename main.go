@@ -169,8 +169,18 @@ var faultCommand = &cli.Command{
 	},
 }
 
+var flagAddress = &cli.StringFlag{
+	Name:    "address",
+	Aliases: []string{"a"},
+	Usage:   "The slowfs RPC server address to connect",
+	Value:   "127.0.0.1:4321",
+}
+
 var clearFaultCommand = &cli.Command{
 	Name: "clear",
+	Flags: []cli.Flag{
+		flagAddress,
+	},
 	Action: func(ctx context.Context, command *cli.Command) error {
 		address := command.String("address")
 		conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -189,6 +199,9 @@ var clearFaultCommand = &cli.Command{
 
 var listFaultCommand = &cli.Command{
 	Name: "list",
+	Flags: []cli.Flag{
+		flagAddress,
+	},
 	Action: func(ctx context.Context, command *cli.Command) error {
 		address := command.String("address")
 		conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -228,10 +241,7 @@ var listFaultCommand = &cli.Command{
 var injectLatencyCommand = &cli.Command{
 	Name: "inject-latency",
 	Flags: []cli.Flag{
-		&cli.StringFlag{
-			Name:     "address",
-			Required: true,
-		},
+		flagAddress,
 		&cli.StringFlag{
 			Name:     "path-regex",
 			Required: true,
@@ -277,10 +287,7 @@ var injectLatencyCommand = &cli.Command{
 var injectErrorCommand = &cli.Command{
 	Name: "inject-error",
 	Flags: []cli.Flag{
-		&cli.StringFlag{
-			Name:     "address",
-			Required: true,
-		},
+		flagAddress,
 		&cli.StringFlag{
 			Name:     "path-regex",
 			Required: true,
@@ -324,7 +331,8 @@ var injectErrorCommand = &cli.Command{
 }
 
 var rootCommand = &cli.Command{
-	Name: "slowfs",
+	Name:  "slowfs",
+	Usage: "A simple FUSE tool for file system fault injection tests",
 	Commands: []*cli.Command{
 		mountCommand,
 		faultCommand,
