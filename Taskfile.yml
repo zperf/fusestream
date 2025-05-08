@@ -1,6 +1,9 @@
 # https://taskfile.dev
 version: '3'
 
+vars:
+  GO_BUILD_FLAGS: -tags assert -trimpath
+
 tasks:
   default:
     cmds:
@@ -8,7 +11,7 @@ tasks:
 
   build:
     cmds:
-      - go build -tags assert -o bin/slowfs main.go
+      - go build {{.GO_BUILD_FLAGS}} -o bin/slowfs main.go
     sources:
       - ./**/*.go
     generates:
@@ -16,11 +19,11 @@ tasks:
 
   build-linux:
     cmds:
-      - GOARCH=amd64 GOOS=linux go build -tags assert -o bin/linux-amd64/slowfs main.go
+      - GOARCH=amd64 GOOS=linux go build {{.GO_BUILD_FLAGS}} -o bin/linux-amd64/slowfs main.go
 
   build-darwin:
     cmds:
-      - GOARCH=arm64 GOOS=darwin go build -tags assert -o bin/darwin-arm64/slowfs main.go
+      - GOARCH=arm64 GOOS=darwin go build {{.GO_BUILD_FLAGS}} -o bin/darwin-arm64/slowfs main.go
 
   clean:
     cmds:
