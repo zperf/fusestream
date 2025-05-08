@@ -25,7 +25,8 @@ var faultCommand = &cli.Command{
 }
 
 var injectLatencyCommand = &cli.Command{
-	Name: "inject-latency",
+	Name:  "inject-latency",
+	Usage: "Inject latency to the filesystem",
 	Flags: []cli.Flag{
 		flagAddress,
 		flagPathRegex,
@@ -33,6 +34,7 @@ var injectLatencyCommand = &cli.Command{
 		flagOp,
 		&cli.DurationFlag{
 			Name:     "latency",
+			Aliases:  []string{"l", "lat"},
 			Required: true,
 		},
 	},
@@ -61,7 +63,8 @@ var injectLatencyCommand = &cli.Command{
 }
 
 var clearFaultCommand = &cli.Command{
-	Name: "clear",
+	Name:  "clear",
+	Usage: "Clear all faults",
 	Flags: []cli.Flag{
 		flagAddress,
 	},
@@ -82,7 +85,8 @@ var clearFaultCommand = &cli.Command{
 }
 
 var listFaultCommand = &cli.Command{
-	Name: "list",
+	Name:  "list",
+	Usage: "List faults",
 	Flags: []cli.Flag{
 		flagAddress,
 	},
@@ -123,7 +127,8 @@ var listFaultCommand = &cli.Command{
 }
 
 var injectErrorCommand = &cli.Command{
-	Name: "inject-error",
+	Name:  "inject-error",
+	Usage: "Inject error-code to the filesystem",
 	Flags: []cli.Flag{
 		flagAddress,
 		flagPathRegex,
@@ -131,6 +136,7 @@ var injectErrorCommand = &cli.Command{
 		flagOp,
 		&cli.Int32Flag{
 			Name:     "error-code",
+			Aliases:  []string{"rc", "ec"},
 			Required: true,
 		},
 	},
