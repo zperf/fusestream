@@ -7,17 +7,17 @@ import (
 )
 
 type Record struct {
-	Path      string    `json:"path,omitzero"`
-	ErrorCode int       `json:"error_code"`
-	Op        pb.OpCode `json:"op"`
-	Fh        uint64    `json:"fh,omitzero"`
+	Path      string `json:"path,omitzero"`
+	ErrorCode int    `json:"error_code"`
+	Op        string `json:"op"`
+	Fh        uint64 `json:"fh,omitzero"`
 }
 
 func NewRecord(path string, ec int, op pb.OpCode) *Record {
 	return &Record{
 		Path:      path,
 		ErrorCode: ec,
-		Op:        op,
+		Op:        op.String(),
 	}
 }
 

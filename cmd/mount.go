@@ -54,7 +54,8 @@ var mountCommand = &cli.Command{
 		},
 	},
 	Action: func(ctx context.Context, command *cli.Command) error {
-		if command.Bool("verbose") {
+		verbose := command.Bool("verbose")
+		if verbose {
 			InitLogging(zerolog.TraceLevel)
 		}
 		syscall.Umask(0)
@@ -63,9 +64,8 @@ var mountCommand = &cli.Command{
 		server := grpc.NewServer(grpc.Creds(insecure.NewCredentials()))
 		pb.RegisterSlowFsServer(server, &slowfs.Rpc{Faults: faults})
 		fs := slowfs.New(
-			command.String("base-dir"),
-			faults,
-			command.String("record"),
+			command.String("base-dir"), faults,
+			command.String("record"), verbose,
 		)
 
 		// start RPC server

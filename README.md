@@ -19,32 +19,30 @@ slowfs fault list
 
 ## OpCodes
 
-```
-"UNKNOWN":    0,
-"STATFS":     1,
-"MKNOD":      2,
-"MKDIR":      3,
-"UNLINK":     4,
-"RMDIR":      5,
-"LINK":       6,
-"SYMLINK":    7,
-"READLINK":   8,
-"RENAME":     9,
-"CHMOD":      10,
-"CHOWN":      11,
-"UTIMENS":    12,
-"CREATE":     13,
-"OPEN":       14,
-"GETATTR":    15,
-"TRUNCATE":   16,
-"READ":       17,
-"WRITE":      18,
-"RELEASE":    19,
-"FSYNC":      20,
-"OPENDIR":    21,
-"READDIR":    22,
-"RELEASEDIR": 23,
-```
+- UNKNOWN
+- STATFS
+- MKNOD
+- MKDIR
+- UNLINK
+- RMDIR
+- LINK
+- SYMLINK
+- READLINK
+- RENAME
+- CHMOD
+- CHOWN
+- UTIMENS
+- CREATE
+- OPEN
+- GETATTR
+- TRUNCATE
+- READ
+- WRITE
+- RELEASE
+- FSYNC
+- OPENDIR
+- READDIR
+- RELEASEDIR
 
 ## Licence
 

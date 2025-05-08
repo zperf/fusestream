@@ -22,12 +22,14 @@ type SlowFS struct {
 	BaseDir string
 	Faults  *FaultManager
 	recordC chan string
+	verbose bool
 }
 
-func New(baseDir string, faults *FaultManager, record string) *SlowFS {
+func New(baseDir string, faults *FaultManager, record string, verbose bool) *SlowFS {
 	f := &SlowFS{
 		BaseDir: baseDir,
 		Faults:  faults,
+		verbose: verbose,
 	}
 
 	if record != "" {
@@ -74,10 +76,12 @@ func mustJsonMarshal(v any) string {
 }
 
 func (f *SlowFS) maybeRecord(v any) {
-	if f.recordC == nil {
-		return
+	if f.verbose {
+		log.Trace().Interface("operation", v).Msg("")
 	}
-	f.recordC <- mustJsonMarshal(v)
+	if f.recordC != nil {
+		f.recordC <- mustJsonMarshal(v)
+	}
 }
 
 func (f *SlowFS) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
@@ -87,7 +91,7 @@ func (f *SlowFS) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
 	copyFuseStatfsFromGoStatfs(stat, &stgo)
 	errc = f.Faults.Query(path, pb.OpCode_STATFS).Execute(errc)
 	f.maybeRecord((&StatfsRecord{
-		Record: Record{path, errc, pb.OpCode_STATFS, 0}}).
+		Record: Record{path, errc, pb.OpCode_STATFS.String(), 0}}).
 		From(stat))
 	return
 }
@@ -98,7 +102,7 @@ func (f *SlowFS) Mknod(path string, mode uint32, dev uint64) (errc int) {
 	errc = errno(syscall.Mknod(path, mode, int(dev)))
 	errc = f.Faults.Query(path, pb.OpCode_MKNOD).Execute(errc)
 	f.maybeRecord(&MknodRecord{
-		Record: Record{path, errc, pb.OpCode_MKNOD, 0},
+		Record: Record{path, errc, pb.OpCode_MKNOD.String(), 0},
 		Mode:   mode,
 		Dev:    dev})
 	return
@@ -110,7 +114,7 @@ func (f *SlowFS) Mkdir(path string, mode uint32) (errc int) {
 	errc = errno(syscall.Mkdir(path, mode))
 	errc = f.Faults.Query(path, pb.OpCode_MKDIR).Execute(errc)
 	f.maybeRecord(&MkdirRecord{
-		Record: Record{path, errc, pb.OpCode_MKDIR, 0},
+		Record: Record{path, errc, pb.OpCode_MKDIR.String(), 0},
 		Mode:   mode})
 	return
 }
@@ -138,7 +142,7 @@ func (f *SlowFS) Link(oldpath string, newpath string) (errc int) {
 	errc = errno(syscall.Link(oldpath, newpath))
 	errc = f.Faults.Query(oldpath, pb.OpCode_LINK).Execute(errc)
 	f.maybeRecord(&LinkRecord{
-		Record:  Record{oldpath, errc, pb.OpCode_LINK, 0},
+		Record:  Record{oldpath, errc, pb.OpCode_LINK.String(), 0},
 		NewPath: newpath})
 	return
 }
@@ -149,7 +153,7 @@ func (f *SlowFS) Symlink(target string, newpath string) (errc int) {
 	errc = errno(syscall.Symlink(target, newpath))
 	errc = f.Faults.Query(target, pb.OpCode_SYMLINK).Execute(errc)
 	f.maybeRecord(&SymlinkRecord{
-		Record:  Record{target, errc, pb.OpCode_SYMLINK, 0},
+		Record:  Record{target, errc, pb.OpCode_SYMLINK.String(), 0},
 		NewPath: newpath})
 	return
 }
@@ -167,7 +171,7 @@ func (f *SlowFS) Readlink(path string) (errc int, target string) {
 	}
 	errc = f.Faults.Query(target, pb.OpCode_READLINK).Execute(errc)
 	f.maybeRecord(&ReadlinkRecord{
-		Record: Record{path, errc, pb.OpCode_READLINK, 0},
+		Record: Record{path, errc, pb.OpCode_READLINK.String(), 0},
 		Target: target})
 	return
 }
@@ -179,7 +183,7 @@ func (f *SlowFS) Rename(oldpath string, newpath string) (errc int) {
 	errc = errno(syscall.Rename(oldpath, newpath))
 	errc = f.Faults.Query(oldpath, pb.OpCode_RENAME).Execute(errc)
 	f.maybeRecord(&RenameRecord{
-		Record:  Record{oldpath, errc, pb.OpCode_RENAME, 0},
+		Record:  Record{oldpath, errc, pb.OpCode_RENAME.String(), 0},
 		NewPath: newpath})
 	return
 }
@@ -189,7 +193,7 @@ func (f *SlowFS) Chmod(path string, mode uint32) (errc int) {
 	errc = errno(syscall.Chmod(path, mode))
 	errc = f.Faults.Query(path, pb.OpCode_CHMOD).Execute(errc)
 	f.maybeRecord(&ChmodRecord{
-		Record: Record{path, errc, pb.OpCode_CHMOD, 0},
+		Record: Record{path, errc, pb.OpCode_CHMOD.String(), 0},
 		Mode:   mode,
 	})
 	return
@@ -200,7 +204,7 @@ func (f *SlowFS) Chown(path string, uid uint32, gid uint32) (errc int) {
 	errc = errno(syscall.Lchown(path, int(uid), int(gid)))
 	errc = f.Faults.Query(path, pb.OpCode_CHOWN).Execute(errc)
 	f.maybeRecord(&ChownRecord{
-		Record: Record{path, errc, pb.OpCode_CHOWN, 0},
+		Record: Record{path, errc, pb.OpCode_CHOWN.String(), 0},
 		UID:    uid,
 		GID:    gid,
 	})
@@ -215,7 +219,7 @@ func (f *SlowFS) Utimens(path string, tmsp1 []fuse.Timespec) (errc int) {
 	errc = errno(syscall.UtimesNano(path, tmsp[:]))
 	errc = f.Faults.Query(path, pb.OpCode_UTIMENS).Execute(errc)
 	f.maybeRecord((&UtimensRecord{
-		Record: Record{path, errc, pb.OpCode_UTIMENS, 0},
+		Record: Record{path, errc, pb.OpCode_UTIMENS.String(), 0},
 	}).From(tmsp1))
 	return
 }
@@ -225,7 +229,7 @@ func (f *SlowFS) Create(path string, flags int, mode uint32) (errc int, fh uint6
 	errc, fh = f.open(path, flags, mode)
 	errc = f.Faults.Query(path, pb.OpCode_CREATE).Execute(errc)
 	f.maybeRecord(&OpenCreateRecord{
-		Record: Record{path, errc, pb.OpCode_CREATE, fh},
+		Record: Record{path, errc, pb.OpCode_CREATE.String(), fh},
 		Flags:  flags,
 		Mode:   mode,
 	})
@@ -237,7 +241,7 @@ func (f *SlowFS) Open(path string, flags int) (errc int, fh uint64) {
 	errc, fh = f.open(path, flags, mode)
 	errc = f.Faults.Query(path, pb.OpCode_OPEN).Execute(errc)
 	f.maybeRecord(&OpenCreateRecord{
-		Record: Record{path, errc, pb.OpCode_CREATE, fh},
+		Record: Record{path, errc, pb.OpCode_OPEN.String(), fh},
 		Flags:  flags,
 		Mode:   mode,
 	})
@@ -270,7 +274,7 @@ func (f *SlowFS) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc int) {
 	var s Stat
 	s.From(stat)
 	f.maybeRecord(&GetattrRecord{
-		Record: Record{path, errc, pb.OpCode_GETATTR, fh},
+		Record: Record{path, errc, pb.OpCode_GETATTR.String(), fh},
 		Stat:   s,
 	})
 	return
@@ -285,7 +289,7 @@ func (f *SlowFS) Truncate(path string, size int64, fh uint64) (errc int) {
 	}
 	errc = f.Faults.Query(path, pb.OpCode_TRUNCATE).Execute(errc)
 	f.maybeRecord(&TruncateRecord{
-		Record: Record{path, errc, pb.OpCode_TRUNCATE, fh},
+		Record: Record{path, errc, pb.OpCode_TRUNCATE.String(), fh},
 		Size:   size,
 	})
 	return
@@ -302,7 +306,7 @@ func (f *SlowFS) Read(path string, buff []byte, ofst int64, fh uint64) (rc int) 
 	}
 	rc = f.Faults.Query(path, pb.OpCode_READ).Execute(rc)
 	f.maybeRecord(&ReadWriteRecord{
-		Record: Record{path, rc, pb.OpCode_READ, fh},
+		Record: Record{path, rc, pb.OpCode_READ.String(), fh},
 		Offset: ofst,
 	})
 	return
@@ -320,7 +324,7 @@ func (f *SlowFS) Write(path string, buff []byte, ofst int64, fh uint64) (rc int)
 	}
 	rc = f.Faults.Query(path, pb.OpCode_WRITE).Execute(rc)
 	f.maybeRecord(&ReadWriteRecord{
-		Record: Record{path, rc, pb.OpCode_WRITE, fh},
+		Record: Record{path, rc, pb.OpCode_WRITE.String(), fh},
 		Offset: ofst,
 	})
 	return
@@ -329,7 +333,7 @@ func (f *SlowFS) Write(path string, buff []byte, ofst int64, fh uint64) (rc int)
 func (f *SlowFS) Release(path string, fh uint64) (errc int) {
 	errc = errno(syscall.Close(int(fh)))
 	errc = f.Faults.Query(path, pb.OpCode_RELEASE).Execute(errc)
-	f.maybeRecord(&Record{path, errc, pb.OpCode_RELEASE, fh})
+	f.maybeRecord(&Record{path, errc, pb.OpCode_RELEASE.String(), fh})
 	return
 }
 
@@ -337,7 +341,7 @@ func (f *SlowFS) Fsync(path string, datasync bool, fh uint64) (errc int) {
 	errc = errno(fsync(datasync, int(fh)))
 	errc = f.Faults.Query(path, pb.OpCode_FSYNC).Execute(errc)
 	f.maybeRecord(&FsyncRecord{
-		Record:   Record{path, errc, pb.OpCode_FSYNC, fh},
+		Record:   Record{path, errc, pb.OpCode_FSYNC.String(), fh},
 		DataSync: datasync,
 	})
 	return
@@ -354,7 +358,7 @@ func (f *SlowFS) Opendir(path string) (errc int, fh uint64) {
 		fh = uint64(fd)
 	}
 	errc = f.Faults.Query(path, pb.OpCode_OPENDIR).Execute(errc)
-	f.maybeRecord(&Record{path, errc, pb.OpCode_OPENDIR, fh})
+	f.maybeRecord(&Record{path, errc, pb.OpCode_OPENDIR.String(), fh})
 	return
 }
 
@@ -383,7 +387,7 @@ func (f *SlowFS) Readdir(path string, fill fillFn, ofst int64, fh uint64) (errc 
 	}
 	errc = f.Faults.Query(path, pb.OpCode_READDIR).Execute(errc)
 	f.maybeRecord(&ReaddirRecord{
-		Record: Record{path, errc, pb.OpCode_READDIR, fh},
+		Record: Record{path, errc, pb.OpCode_READDIR.String(), fh},
 		Offset: ofst,
 	})
 	return
@@ -392,7 +396,7 @@ func (f *SlowFS) Readdir(path string, fill fillFn, ofst int64, fh uint64) (errc 
 func (f *SlowFS) Releasedir(path string, fh uint64) (errc int) {
 	errc = errno(syscall.Close(int(fh)))
 	errc = f.Faults.Query(path, pb.OpCode_RELEASEDIR).Execute(errc)
-	f.maybeRecord(&Record{path, errc, pb.OpCode_READDIR, fh})
+	f.maybeRecord(&Record{path, errc, pb.OpCode_RELEASEDIR.String(), fh})
 	return
 }
 
