@@ -10,5 +10,6 @@ var RootCommand = &cli.Command{
 	Commands: []*cli.Command{
 		mountCommand,
 		faultCommand,
+		regexCommand,
 	},
 }
