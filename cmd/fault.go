@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/fatih/color"
@@ -21,6 +22,7 @@ var faultCommand = &cli.Command{
 		injectErrorCommand,
 		listFaultCommand,
 		clearFaultCommand,
+		removeFaultCommand,
 	},
 }
 
@@ -62,6 +64,17 @@ var injectLatencyCommand = &cli.Command{
 	},
 }
 
+func removeFaults(ctx context.Context, address string, request *pb.DeleteFaultRequest) error {
+	conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return err
+	}
+	defer func() { _ = conn.Close() }()
+	client := pb.NewSlowFsClient(conn)
+	_, err = client.DeleteFault(ctx, request)
+	return err
+}
+
 var clearFaultCommand = &cli.Command{
 	Name:  "clear",
 	Usage: "Clear all faults",
@@ -69,18 +82,39 @@ var clearFaultCommand = &cli.Command{
 		flagAddress,
 	},
 	Action: func(ctx context.Context, command *cli.Command) error {
-		address := command.String("address")
-		conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err != nil {
-			return err
-		}
-		defer func() { _ = conn.Close() }()
+		req := &pb.DeleteFaultRequest{All: true}
+		return removeFaults(ctx, command.String("address"), req)
+	},
+}
 
-		client := pb.NewSlowFsClient(conn)
-		_, err = client.DeleteFault(ctx, &pb.DeleteFaultRequest{
-			All: true,
-		})
-		return err
+var removeFaultCommand = &cli.Command{
+	Name:  "remove",
+	Usage: "Remove faults",
+	Flags: []cli.Flag{
+		flagAddress,
+		&cli.StringFlag{
+			Name:    "path-regex",
+			Aliases: []string{"g"},
+		},
+		&cli.Int32SliceFlag{
+			Name: "ids",
+		},
+	},
+	Action: func(ctx context.Context, command *cli.Command) error {
+		ids := command.Int32Slice("ids")
+		pathRegex := command.String("path-regex")
+		if len(ids) == 0 && pathRegex == "" {
+			return errors.New("must specify at least one id or path-regex")
+		}
+
+		var req *pb.DeleteFaultRequest
+		if len(ids) > 0 {
+			req = &pb.DeleteFaultRequest{Id: ids}
+		} else {
+			req = &pb.DeleteFaultRequest{PathRe: pathRegex}
+		}
+
+		return removeFaults(ctx, command.String("address"), req)
 	},
 }
 
