@@ -33,7 +33,7 @@ func copyFuseStatfsFromGoStatfs(dst *fuse.Statfs_t, src *syscall.Statfs_t) {
 	dst.Files = src.Files
 	dst.Ffree = src.Ffree
 	dst.Favail = src.Ffree
-	dst.Namemax = 255 //uint64(src.Namelen)
+	dst.Namemax = uint64(src.Namelen)
 }
 
 func copyFusestatFromGostat(dst *fuse.Stat_t, src *syscall.Stat_t) {
@@ -41,7 +41,7 @@ func copyFusestatFromGostat(dst *fuse.Stat_t, src *syscall.Stat_t) {
 	dst.Dev = src.Dev
 	dst.Ino = src.Ino
 	dst.Mode = src.Mode
-	dst.Nlink = src.Nlink
+	dst.Nlink = uint32(src.Nlink)
 	dst.Uid = src.Uid
 	dst.Gid = src.Gid
 	dst.Rdev = src.Rdev
