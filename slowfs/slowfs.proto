@@ -29,7 +29,7 @@ message InjectLatencyResponse {
 message DeleteFaultRequest {
   repeated int32 id = 1;
   bool all = 2;
-  string path = 3;
+  string path_re = 3;
 }
 
 message DeleteFaultResponse {
