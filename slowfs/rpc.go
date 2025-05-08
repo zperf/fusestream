@@ -43,7 +43,8 @@ func (r *Rpc) DeleteFault(_ context.Context, req *pb.DeleteFaultRequest) (*pb.De
 }
 
 func (r *Rpc) ListFaults(_ context.Context, _ *pb.Void) (*pb.ListFaultsResponse, error) {
+	faults := r.Faults.ListFaults()
 	return &pb.ListFaultsResponse{
-		Faults: r.Faults.ListFaults(),
+		Faults: faults,
 	}, nil
 }

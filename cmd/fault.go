@@ -110,15 +110,18 @@ var listFaultCommand = &cli.Command{
 
 		for _, f := range rsp.GetFaults() {
 			var fault string
+			var op string
 			switch m := f.GetFault().(type) {
 			case *pb.FaultVariant_InjectLatencyRequest:
 				req := m.InjectLatencyRequest
 				fault = fmt.Sprintf("lat/%vms/p=%.2f", req.LatencyMs, req.Possibility)
+				op = req.Op.String()
 			case *pb.FaultVariant_InjectErrorRequest:
 				req := m.InjectErrorRequest
 				fault = fmt.Sprintf("err/rc=%v/p=%.2f", req.ErrorCode, req.Possibility)
+				op = req.Op.String()
 			}
-			tbl.AddRow(f.Id, f.Path, f.Op.String(), fault)
+			tbl.AddRow(f.Id, f.Path, op, fault)
 		}
 
 		tbl.Print()
