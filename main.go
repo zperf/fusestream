@@ -117,6 +117,10 @@ var mountCommand = &cli.Command{
 			Name:  "record",
 			Usage: "Filesystem operations record path",
 		},
+		&cli.StringSliceFlag{
+			Name:  "mount-options",
+			Usage: "FUSE mount options",
+		},
 	},
 	Action: func(ctx context.Context, command *cli.Command) error {
 		if command.Bool("verbose") {
@@ -148,7 +152,7 @@ var mountCommand = &cli.Command{
 		// mount FUSE
 		host := fuse.NewFileSystemHost(fs)
 		host.SetUseIno(command.Bool("use-ino"))
-		host.Mount(command.String("mountpoint"), []string{})
+		host.Mount(command.String("mountpoint"), command.StringSlice("mount-options"))
 
 		return nil
 	},
