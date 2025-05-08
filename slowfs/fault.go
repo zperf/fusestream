@@ -29,19 +29,33 @@ func NewFaultManager() *FaultManager {
 	}
 }
 
+func GetOpCode(fv *pb.FaultVariant) pb.OpCode {
+	switch f := fv.GetFault().(type) {
+	case *pb.FaultVariant_InjectErrorRequest:
+		return f.InjectErrorRequest.Op
+	case *pb.FaultVariant_InjectLatencyRequest:
+		return f.InjectLatencyRequest.Op
+	default:
+		return pb.OpCode_UNKNOWN
+	}
+}
+
 func setFaultByList(fa *Fault, fvs []*pb.FaultVariant, op pb.OpCode) {
 	for _, fv := range fvs {
-		if fv.Op != op {
+		if GetOpCode(fv) != op {
 			continue
 		}
 
-		if e := fv.GetInjectErrorRequest(); e != nil {
-			if rand.Float32() <= e.Possibility {
-				fa.ReturnCode = &[]int{int(e.ErrorCode)}[0]
+		switch f := fv.GetFault().(type) {
+		case *pb.FaultVariant_InjectErrorRequest:
+			req := f.InjectErrorRequest
+			if rand.Float32() <= req.Possibility {
+				fa.ReturnCode = &[]int{int(req.ErrorCode)}[0]
 			}
-		} else if l := fv.GetInjectLatencyRequest(); l != nil {
-			if rand.Float32() <= l.Possibility {
-				fa.Delay = &[]time.Duration{time.Duration(l.LatencyMs) * time.Millisecond}[0]
+		case *pb.FaultVariant_InjectLatencyRequest:
+			req := f.InjectLatencyRequest
+			if rand.Float32() <= req.Possibility {
+				fa.Delay = &[]time.Duration{time.Duration(req.LatencyMs) * time.Millisecond}[0]
 			}
 		}
 	}
@@ -160,7 +174,7 @@ func (f *FaultManager) DeleteAll() []int32 {
 	return m
 }
 
-func (f *FaultManager) DeleteByPath(path string) []int32 {
+func (f *FaultManager) DeleteByPathRegex(path string) []int32 {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 

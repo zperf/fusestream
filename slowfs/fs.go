@@ -222,37 +222,36 @@ func (f *SlowFS) Utimens(path string, tmsp1 []fuse.Timespec) (errc int) {
 
 func (f *SlowFS) Create(path string, flags int, mode uint32) (errc int, fh uint64) {
 	defer setuidgid()()
-	return f.open(path, flags, mode)
+	errc, fh = f.open(path, flags, mode)
+	errc = f.Faults.Query(path, pb.OpCode_CREATE).Execute(errc)
+	f.maybeRecord(&OpenCreateRecord{
+		Record: Record{path, errc, pb.OpCode_CREATE, fh},
+		Flags:  flags,
+		Mode:   mode,
+	})
+	return
 }
 
 func (f *SlowFS) Open(path string, flags int) (errc int, fh uint64) {
-	return f.open(path, flags, 0)
+	mode := uint32(0)
+	errc, fh = f.open(path, flags, mode)
+	errc = f.Faults.Query(path, pb.OpCode_OPEN).Execute(errc)
+	f.maybeRecord(&OpenCreateRecord{
+		Record: Record{path, errc, pb.OpCode_CREATE, fh},
+		Flags:  flags,
+		Mode:   mode,
+	})
+	return
 }
 
 func (f *SlowFS) open(path string, flags int, mode uint32) (errc int, fh uint64) {
-	path = filepath.Join(f.BaseDir, path)
-	fd, e := syscall.Open(path, flags, mode)
+	fd, e := syscall.Open(filepath.Join(f.BaseDir, path), flags, mode)
 	if e != nil {
 		errc = errno(e)
 		fh = ^uint64(0)
 	} else {
 		errc = 0
 		fh = uint64(fd)
-	}
-	if mode == 0 {
-		errc = f.Faults.Query(path, pb.OpCode_OPEN).Execute(errc)
-		f.maybeRecord(&OpenCreateRecord{
-			Record: Record{path, errc, pb.OpCode_OPEN, fh},
-			Flags:  flags,
-			Mode:   mode,
-		})
-	} else {
-		errc = f.Faults.Query(path, pb.OpCode_CREATE).Execute(errc)
-		f.maybeRecord(&OpenCreateRecord{
-			Record: Record{path, errc, pb.OpCode_CREATE, fh},
-			Flags:  flags,
-			Mode:   mode,
-		})
 	}
 	return
 }

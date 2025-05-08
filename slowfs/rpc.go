@@ -36,8 +36,8 @@ func (r *Rpc) DeleteFault(_ context.Context, req *pb.DeleteFaultRequest) (*pb.De
 		rsp.Deleted = r.Faults.DeleteAll()
 	} else if ids := req.GetId(); ids != nil {
 		rsp.Deleted = r.Faults.DeleteByID(ids)
-	} else if path := req.GetPath(); path != "" {
-		rsp.Deleted = r.Faults.DeleteByPath(path)
+	} else if pathRe := req.GetPathRe(); pathRe != "" {
+		rsp.Deleted = r.Faults.DeleteByPathRegex(pathRe)
 	}
 	return rsp, nil
 }
