@@ -9,6 +9,10 @@ tasks:
   build:
     cmds:
       - go build -tags assert -o bin/slowfs main.go
+    sources:
+      - ./**/*.go
+    generates:
+      - ./bin/slowfs
 
   build-linux:
     cmds:
@@ -43,3 +47,8 @@ tasks:
         --go-grpc_out=paths=source_relative:pb
         --go_out=paths=source_relative:pb
         slowfs.proto
+
+  install:
+    cmds:
+      - task: build
+      - install -D ./bin/slowfs /usr/local/bin/slowfs
