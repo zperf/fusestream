@@ -21,7 +21,6 @@ type SlowFS struct {
 
 	BaseDir string
 	Faults  *FaultManager
-	Record  string
 	recordC chan string
 }
 
@@ -29,25 +28,20 @@ func New(baseDir string, faults *FaultManager, record string) *SlowFS {
 	f := &SlowFS{
 		BaseDir: baseDir,
 		Faults:  faults,
-		Record:  record,
 	}
 
 	if record != "" {
-		recordC := make(chan string, 1024)
-		f.recordC = recordC
-		go recordWriter(record, recordC)
+		f.recordC = make(chan string, 1024)
+		go recordWriter(record, f.recordC)
 	}
 
 	return f
 }
 
-func (f *SlowFS) Close() {
-	if f.recordC != nil {
-		close(f.recordC)
-	}
-}
-
 func recordWriter(record string, recordC chan string) {
+	log.Trace().Str("record", record).Msg("Record writer started")
+	defer log.Trace().Str("record", record).Msg("Record writer exiting")
+
 	fh, err := os.OpenFile(record, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Open record file failed")

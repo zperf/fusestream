@@ -81,22 +81,26 @@ func initLogging(level zerolog.Level) {
 }
 
 var mountCommand = &cli.Command{
-	Name: "mount",
+	Name:  "mount",
+	Usage: "Mount the filesystem",
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:     "base-dir",
+			Aliases:  []string{"b"},
 			Usage:    "Data base directory",
 			Required: true,
 		},
 		&cli.StringFlag{
 			Name:     "mountpoint",
+			Aliases:  []string{"m"},
 			Usage:    "Mount point",
 			Required: true,
 		},
 		&cli.StringFlag{
-			Name:  "listen",
-			Usage: "RPC server listen address",
-			Value: "127.0.0.1:4321",
+			Name:    "listen",
+			Aliases: []string{"l"},
+			Usage:   "RPC server listen address",
+			Value:   "127.0.0.1:4321",
 		},
 		&cli.BoolFlag{
 			Name:  "use-ino",
@@ -104,12 +108,14 @@ var mountCommand = &cli.Command{
 			Value: true,
 		},
 		&cli.BoolFlag{
-			Name:  "verbose",
-			Usage: "Enable verbose loggings",
-			Value: false,
+			Name:    "verbose",
+			Aliases: []string{"v"},
+			Usage:   "Enable verbose loggings",
+			Value:   false,
 		},
 		&cli.StringFlag{
-			Name: "record",
+			Name:  "record",
+			Usage: "Filesystem operations record path",
 		},
 	},
 	Action: func(ctx context.Context, command *cli.Command) error {
@@ -149,7 +155,8 @@ var mountCommand = &cli.Command{
 }
 
 var faultCommand = &cli.Command{
-	Name: "fault",
+	Name:  "fault",
+	Usage: "Fault injection commands",
 	Commands: []*cli.Command{
 		injectLatencyCommand,
 		injectErrorCommand,
