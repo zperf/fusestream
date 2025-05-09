@@ -16,8 +16,8 @@ import (
 	"github.com/fanyang89/slowfs/slowfs"
 )
 
-var mountCommand = &cli.Command{
-	Name:  "mount",
+var fuseCommand = &cli.Command{
+	Name:  "fuse-mount",
 	Usage: "Mount the filesystem",
 	Flags: []cli.Flag{
 		flagVerbose,

@@ -1,10 +1,12 @@
 package slowfs
 
 import (
+	"context"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/d5/tengo/v2"
 	"github.com/rs/zerolog/log"
 
 	"github.com/fanyang89/slowfs/pb"
@@ -44,6 +46,8 @@ func (f *FsFault) Clone() *FsFault {
 type BlkFault struct {
 	ID int32
 	Op pb.BlkOp
+
+	preCond *string
 
 	ReturnValue            *int64
 	ReturnValuePossibility float32
@@ -128,6 +132,15 @@ func (f *FaultManager) FsInject(path string, s *FsFault) int32 {
 	id := f.getNextID()
 	s.ID = id
 	f.fsFaultMap[FsFaultKey{path, s.Op}] = s
+	f.mutex.Unlock()
+	return id
+}
+
+func (f *FaultManager) BlkInject(s *BlkFault) int32 {
+	f.mutex.Lock()
+	id := f.getNextID()
+	s.ID = id
+	f.blkFaultMap[s.Op] = s
 	f.mutex.Unlock()
 	return id
 }
@@ -218,10 +231,34 @@ func (f *FaultManager) GetBlkFault(op pb.BlkOp, offset int64, len int) FaultExec
 		return zeroFault
 	}
 
+	sc := blkFault.preCond
+	if sc != nil {
+		preCondObject, err := tengo.Eval(context.Background(), *sc, map[string]interface{}{
+			"offset": offset,
+			"length": len,
+		})
+		var preCond bool
+		preCond, ok = preCondObject.(bool)
+		if err != nil || !ok {
+			log.Warn().Err(err).Int64("offset", offset).Int("len", len).
+				Interface("preCondObject", preCondObject).
+				Msg("Execute pre-condition script failed")
+			return zeroFault
+		}
+
+		if !preCond {
+			return zeroFault
+		}
+	}
+
 	fault := &Fault{}
 	fault.FromBlk(blkFault)
 	if fault.HasValue() {
+		e := log.Trace().Str("op", op.String()).Int64("offset", offset).Int("len", len)
+		e = fault.AppendTrace(e)
+		e.Msg("Fault injected")
 		return fault
 	}
+
 	return zeroFault
 }

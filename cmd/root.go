@@ -8,9 +8,9 @@ var RootCommand = &cli.Command{
 	Name:  "slowfs",
 	Usage: "A simple FUSE tool for file system fault injection tests",
 	Commands: []*cli.Command{
-		mountCommand,
-		faultCommand,
-		regexCommand,
+		fuseCommand,
 		nbdCommand,
+		faultCommand,
+		toolCommand,
 	},
 }

@@ -19,18 +19,20 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SlowFs_DeleteFault_FullMethodName   = "/slowfs.proto.SlowFs/DeleteFault"
-	SlowFs_ListFaults_FullMethodName    = "/slowfs.proto.SlowFs/ListFaults"
-	SlowFs_InjectFsFault_FullMethodName = "/slowfs.proto.SlowFs/InjectFsFault"
+	SlowFs_ListFaults_FullMethodName     = "/slowfs.proto.SlowFs/ListFaults"
+	SlowFs_DeleteFault_FullMethodName    = "/slowfs.proto.SlowFs/DeleteFault"
+	SlowFs_InjectFsFault_FullMethodName  = "/slowfs.proto.SlowFs/InjectFsFault"
+	SlowFs_InjectBlkFault_FullMethodName = "/slowfs.proto.SlowFs/InjectBlkFault"
 )
 
 // SlowFsClient is the client API for SlowFs service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SlowFsClient interface {
-	DeleteFault(ctx context.Context, in *DeleteFaultRequest, opts ...grpc.CallOption) (*DeleteFaultResponse, error)
 	ListFaults(ctx context.Context, in *Void, opts ...grpc.CallOption) (*ListFaultsResponse, error)
+	DeleteFault(ctx context.Context, in *DeleteFaultRequest, opts ...grpc.CallOption) (*DeleteFaultResponse, error)
 	InjectFsFault(ctx context.Context, in *InjectFsFaultRequest, opts ...grpc.CallOption) (*InjectFsFaultResponse, error)
+	InjectBlkFault(ctx context.Context, in *InjectBlkFaultRequest, opts ...grpc.CallOption) (*InjectBlkFaultResponse, error)
 }
 
 type slowFsClient struct {
@@ -41,20 +43,20 @@ func NewSlowFsClient(cc grpc.ClientConnInterface) SlowFsClient {
 	return &slowFsClient{cc}
 }
 
-func (c *slowFsClient) DeleteFault(ctx context.Context, in *DeleteFaultRequest, opts ...grpc.CallOption) (*DeleteFaultResponse, error) {
+func (c *slowFsClient) ListFaults(ctx context.Context, in *Void, opts ...grpc.CallOption) (*ListFaultsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DeleteFaultResponse)
-	err := c.cc.Invoke(ctx, SlowFs_DeleteFault_FullMethodName, in, out, cOpts...)
+	out := new(ListFaultsResponse)
+	err := c.cc.Invoke(ctx, SlowFs_ListFaults_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *slowFsClient) ListFaults(ctx context.Context, in *Void, opts ...grpc.CallOption) (*ListFaultsResponse, error) {
+func (c *slowFsClient) DeleteFault(ctx context.Context, in *DeleteFaultRequest, opts ...grpc.CallOption) (*DeleteFaultResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListFaultsResponse)
-	err := c.cc.Invoke(ctx, SlowFs_ListFaults_FullMethodName, in, out, cOpts...)
+	out := new(DeleteFaultResponse)
+	err := c.cc.Invoke(ctx, SlowFs_DeleteFault_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -71,13 +73,24 @@ func (c *slowFsClient) InjectFsFault(ctx context.Context, in *InjectFsFaultReque
 	return out, nil
 }
 
+func (c *slowFsClient) InjectBlkFault(ctx context.Context, in *InjectBlkFaultRequest, opts ...grpc.CallOption) (*InjectBlkFaultResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(InjectBlkFaultResponse)
+	err := c.cc.Invoke(ctx, SlowFs_InjectBlkFault_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SlowFsServer is the server API for SlowFs service.
 // All implementations must embed UnimplementedSlowFsServer
 // for forward compatibility.
 type SlowFsServer interface {
-	DeleteFault(context.Context, *DeleteFaultRequest) (*DeleteFaultResponse, error)
 	ListFaults(context.Context, *Void) (*ListFaultsResponse, error)
+	DeleteFault(context.Context, *DeleteFaultRequest) (*DeleteFaultResponse, error)
 	InjectFsFault(context.Context, *InjectFsFaultRequest) (*InjectFsFaultResponse, error)
+	InjectBlkFault(context.Context, *InjectBlkFaultRequest) (*InjectBlkFaultResponse, error)
 	mustEmbedUnimplementedSlowFsServer()
 }
 
@@ -88,14 +101,17 @@ type SlowFsServer interface {
 // pointer dereference when methods are called.
 type UnimplementedSlowFsServer struct{}
 
-func (UnimplementedSlowFsServer) DeleteFault(context.Context, *DeleteFaultRequest) (*DeleteFaultResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteFault not implemented")
-}
 func (UnimplementedSlowFsServer) ListFaults(context.Context, *Void) (*ListFaultsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListFaults not implemented")
 }
+func (UnimplementedSlowFsServer) DeleteFault(context.Context, *DeleteFaultRequest) (*DeleteFaultResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteFault not implemented")
+}
 func (UnimplementedSlowFsServer) InjectFsFault(context.Context, *InjectFsFaultRequest) (*InjectFsFaultResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method InjectFsFault not implemented")
+}
+func (UnimplementedSlowFsServer) InjectBlkFault(context.Context, *InjectBlkFaultRequest) (*InjectBlkFaultResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method InjectBlkFault not implemented")
 }
 func (UnimplementedSlowFsServer) mustEmbedUnimplementedSlowFsServer() {}
 func (UnimplementedSlowFsServer) testEmbeddedByValue()                {}
@@ -118,24 +134,6 @@ func RegisterSlowFsServer(s grpc.ServiceRegistrar, srv SlowFsServer) {
 	s.RegisterService(&SlowFs_ServiceDesc, srv)
 }
 
-func _SlowFs_DeleteFault_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteFaultRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SlowFsServer).DeleteFault(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: SlowFs_DeleteFault_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SlowFsServer).DeleteFault(ctx, req.(*DeleteFaultRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _SlowFs_ListFaults_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Void)
 	if err := dec(in); err != nil {
@@ -150,6 +148,24 @@ func _SlowFs_ListFaults_Handler(srv interface{}, ctx context.Context, dec func(i
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SlowFsServer).ListFaults(ctx, req.(*Void))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SlowFs_DeleteFault_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteFaultRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SlowFsServer).DeleteFault(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SlowFs_DeleteFault_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SlowFsServer).DeleteFault(ctx, req.(*DeleteFaultRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -172,6 +188,24 @@ func _SlowFs_InjectFsFault_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SlowFs_InjectBlkFault_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InjectBlkFaultRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SlowFsServer).InjectBlkFault(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SlowFs_InjectBlkFault_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SlowFsServer).InjectBlkFault(ctx, req.(*InjectBlkFaultRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SlowFs_ServiceDesc is the grpc.ServiceDesc for SlowFs service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -180,16 +214,20 @@ var SlowFs_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*SlowFsServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "DeleteFault",
-			Handler:    _SlowFs_DeleteFault_Handler,
-		},
-		{
 			MethodName: "ListFaults",
 			Handler:    _SlowFs_ListFaults_Handler,
 		},
 		{
+			MethodName: "DeleteFault",
+			Handler:    _SlowFs_DeleteFault_Handler,
+		},
+		{
 			MethodName: "InjectFsFault",
 			Handler:    _SlowFs_InjectFsFault_Handler,
+		},
+		{
+			MethodName: "InjectBlkFault",
+			Handler:    _SlowFs_InjectBlkFault_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

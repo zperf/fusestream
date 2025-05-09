@@ -2,7 +2,12 @@ package slowfs
 
 import (
 	"context"
+	"errors"
 	"time"
+
+	"github.com/d5/tengo/v2"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/fanyang89/slowfs/pb"
 )
@@ -10,6 +15,47 @@ import (
 type Rpc struct {
 	pb.UnimplementedSlowFsServer
 	Faults *FaultManager
+}
+
+func (r *Rpc) InjectBlkFault(ctx context.Context, req *pb.InjectBlkFaultRequest) (*pb.InjectBlkFaultResponse, error) {
+	fault := &BlkFault{
+		Op: req.Fault.Op,
+	}
+
+	switch m := req.Fault.PreCond.(type) {
+	case *pb.BlkFault_Expression:
+		_, err := tengo.Eval(ctx, m.Expression, map[string]interface{}{"offset": 0, "length": 0})
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid pre-cond script, err: %v", err)
+		}
+
+		s := m.Expression
+		fault.preCond = &s
+	}
+
+	switch m := req.Fault.Delay.(type) {
+	case *pb.BlkFault_DelayFault:
+		fault.DelayPossibility = m.DelayFault.Possibility
+		d := time.Duration(m.DelayFault.DelayMs) * time.Millisecond
+		fault.Delay = &d
+	}
+
+	switch m := req.Fault.Err.(type) {
+	case *pb.BlkFault_ErrorFault:
+		fault.ErrPossibility = m.ErrorFault.Possibility
+		err := errors.New(m.ErrorFault.Err)
+		fault.Err = &err
+	}
+
+	switch m := req.Fault.ReturnValue.(type) {
+	case *pb.BlkFault_ReturnValueFault:
+		fault.ReturnValuePossibility = m.ReturnValueFault.Possibility
+		rc := m.ReturnValueFault.ReturnValue
+		fault.ReturnValue = &rc
+	}
+
+	id := r.Faults.BlkInject(fault)
+	return &pb.InjectBlkFaultResponse{Id: id}, nil
 }
 
 func (r *Rpc) InjectFsFault(_ context.Context, req *pb.InjectFsFaultRequest) (*pb.InjectFsFaultResponse, error) {

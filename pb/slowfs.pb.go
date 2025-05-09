@@ -468,6 +468,10 @@ type BlkFault struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Id    int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Op    BlkOp                  `protobuf:"varint,2,opt,name=op,proto3,enum=slowfs.proto.BlkOp" json:"op,omitempty"`
+	// Types that are valid to be assigned to PreCond:
+	//
+	//	*BlkFault_Expression
+	PreCond isBlkFault_PreCond `protobuf_oneof:"pre_cond"`
 	// Types that are valid to be assigned to ReturnValue:
 	//
 	//	*BlkFault_ReturnValueFault
@@ -528,6 +532,22 @@ func (x *BlkFault) GetOp() BlkOp {
 	return BlkOp_BLK_UNKNOWN
 }
 
+func (x *BlkFault) GetPreCond() isBlkFault_PreCond {
+	if x != nil {
+		return x.PreCond
+	}
+	return nil
+}
+
+func (x *BlkFault) GetExpression() string {
+	if x != nil {
+		if x, ok := x.PreCond.(*BlkFault_Expression); ok {
+			return x.Expression
+		}
+	}
+	return ""
+}
+
 func (x *BlkFault) GetReturnValue() isBlkFault_ReturnValue {
 	if x != nil {
 		return x.ReturnValue
@@ -575,6 +595,16 @@ func (x *BlkFault) GetDelayFault() *DelayFault {
 	}
 	return nil
 }
+
+type isBlkFault_PreCond interface {
+	isBlkFault_PreCond()
+}
+
+type BlkFault_Expression struct {
+	Expression string `protobuf:"bytes,6,opt,name=expression,proto3,oneof"`
+}
+
+func (*BlkFault_Expression) isBlkFault_PreCond() {}
 
 type isBlkFault_ReturnValue interface {
 	isBlkFault_ReturnValue()
@@ -694,6 +724,94 @@ func (x *InjectFsFaultResponse) GetId() int32 {
 	return 0
 }
 
+type InjectBlkFaultRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Fault         *BlkFault              `protobuf:"bytes,1,opt,name=fault,proto3" json:"fault,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InjectBlkFaultRequest) Reset() {
+	*x = InjectBlkFaultRequest{}
+	mi := &file_slowfs_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InjectBlkFaultRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InjectBlkFaultRequest) ProtoMessage() {}
+
+func (x *InjectBlkFaultRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_slowfs_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InjectBlkFaultRequest.ProtoReflect.Descriptor instead.
+func (*InjectBlkFaultRequest) Descriptor() ([]byte, []int) {
+	return file_slowfs_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *InjectBlkFaultRequest) GetFault() *BlkFault {
+	if x != nil {
+		return x.Fault
+	}
+	return nil
+}
+
+type InjectBlkFaultResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InjectBlkFaultResponse) Reset() {
+	*x = InjectBlkFaultResponse{}
+	mi := &file_slowfs_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InjectBlkFaultResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InjectBlkFaultResponse) ProtoMessage() {}
+
+func (x *InjectBlkFaultResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_slowfs_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InjectBlkFaultResponse.ProtoReflect.Descriptor instead.
+func (*InjectBlkFaultResponse) Descriptor() ([]byte, []int) {
+	return file_slowfs_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *InjectBlkFaultResponse) GetId() int32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
 type DeleteFaultRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            []int32                `protobuf:"varint,1,rep,packed,name=id,proto3" json:"id,omitempty"`
@@ -705,7 +823,7 @@ type DeleteFaultRequest struct {
 
 func (x *DeleteFaultRequest) Reset() {
 	*x = DeleteFaultRequest{}
-	mi := &file_slowfs_proto_msgTypes[7]
+	mi := &file_slowfs_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -717,7 +835,7 @@ func (x *DeleteFaultRequest) String() string {
 func (*DeleteFaultRequest) ProtoMessage() {}
 
 func (x *DeleteFaultRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_slowfs_proto_msgTypes[7]
+	mi := &file_slowfs_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -730,7 +848,7 @@ func (x *DeleteFaultRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteFaultRequest.ProtoReflect.Descriptor instead.
 func (*DeleteFaultRequest) Descriptor() ([]byte, []int) {
-	return file_slowfs_proto_rawDescGZIP(), []int{7}
+	return file_slowfs_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *DeleteFaultRequest) GetId() []int32 {
@@ -763,7 +881,7 @@ type DeleteFaultResponse struct {
 
 func (x *DeleteFaultResponse) Reset() {
 	*x = DeleteFaultResponse{}
-	mi := &file_slowfs_proto_msgTypes[8]
+	mi := &file_slowfs_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -775,7 +893,7 @@ func (x *DeleteFaultResponse) String() string {
 func (*DeleteFaultResponse) ProtoMessage() {}
 
 func (x *DeleteFaultResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_slowfs_proto_msgTypes[8]
+	mi := &file_slowfs_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -788,7 +906,7 @@ func (x *DeleteFaultResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteFaultResponse.ProtoReflect.Descriptor instead.
 func (*DeleteFaultResponse) Descriptor() ([]byte, []int) {
-	return file_slowfs_proto_rawDescGZIP(), []int{8}
+	return file_slowfs_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *DeleteFaultResponse) GetDeletedIds() []int32 {
@@ -806,7 +924,7 @@ type Void struct {
 
 func (x *Void) Reset() {
 	*x = Void{}
-	mi := &file_slowfs_proto_msgTypes[9]
+	mi := &file_slowfs_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -818,7 +936,7 @@ func (x *Void) String() string {
 func (*Void) ProtoMessage() {}
 
 func (x *Void) ProtoReflect() protoreflect.Message {
-	mi := &file_slowfs_proto_msgTypes[9]
+	mi := &file_slowfs_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -831,7 +949,7 @@ func (x *Void) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Void.ProtoReflect.Descriptor instead.
 func (*Void) Descriptor() ([]byte, []int) {
-	return file_slowfs_proto_rawDescGZIP(), []int{9}
+	return file_slowfs_proto_rawDescGZIP(), []int{11}
 }
 
 type ListFaultsResponse struct {
@@ -844,7 +962,7 @@ type ListFaultsResponse struct {
 
 func (x *ListFaultsResponse) Reset() {
 	*x = ListFaultsResponse{}
-	mi := &file_slowfs_proto_msgTypes[10]
+	mi := &file_slowfs_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -856,7 +974,7 @@ func (x *ListFaultsResponse) String() string {
 func (*ListFaultsResponse) ProtoMessage() {}
 
 func (x *ListFaultsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_slowfs_proto_msgTypes[10]
+	mi := &file_slowfs_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -869,7 +987,7 @@ func (x *ListFaultsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFaultsResponse.ProtoReflect.Descriptor instead.
 func (*ListFaultsResponse) Descriptor() ([]byte, []int) {
-	return file_slowfs_proto_rawDescGZIP(), []int{10}
+	return file_slowfs_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ListFaultsResponse) GetFsFaults() []*FsFault {
@@ -910,21 +1028,30 @@ const file_slowfs_proto_rawDesc = "" +
 	"\n" +
 	"ErrorFault\x12 \n" +
 	"\vpossibility\x18\x01 \x01(\x02R\vpossibility\x12\x10\n" +
-	"\x03err\x18\x02 \x01(\tR\x03err\"\xa9\x02\n" +
+	"\x03err\x18\x02 \x01(\tR\x03err\"\xd7\x02\n" +
 	"\bBlkFault\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12#\n" +
-	"\x02op\x18\x02 \x01(\x0e2\x13.slowfs.proto.BlkOpR\x02op\x12N\n" +
-	"\x12return_value_fault\x18\x03 \x01(\v2\x1e.slowfs.proto.ReturnValueFaultH\x00R\x10returnValueFault\x12;\n" +
-	"\verror_fault\x18\x04 \x01(\v2\x18.slowfs.proto.ErrorFaultH\x01R\n" +
+	"\x02op\x18\x02 \x01(\x0e2\x13.slowfs.proto.BlkOpR\x02op\x12 \n" +
+	"\n" +
+	"expression\x18\x06 \x01(\tH\x00R\n" +
+	"expression\x12N\n" +
+	"\x12return_value_fault\x18\x03 \x01(\v2\x1e.slowfs.proto.ReturnValueFaultH\x01R\x10returnValueFault\x12;\n" +
+	"\verror_fault\x18\x04 \x01(\v2\x18.slowfs.proto.ErrorFaultH\x02R\n" +
 	"errorFault\x12;\n" +
-	"\vdelay_fault\x18\x05 \x01(\v2\x18.slowfs.proto.DelayFaultH\x02R\n" +
-	"delayFaultB\x0e\n" +
+	"\vdelay_fault\x18\x05 \x01(\v2\x18.slowfs.proto.DelayFaultH\x03R\n" +
+	"delayFaultB\n" +
+	"\n" +
+	"\bpre_condB\x0e\n" +
 	"\freturn_valueB\x05\n" +
 	"\x03errB\a\n" +
 	"\x05delay\"C\n" +
 	"\x14InjectFsFaultRequest\x12+\n" +
 	"\x05fault\x18\x01 \x01(\v2\x15.slowfs.proto.FsFaultR\x05fault\"'\n" +
 	"\x15InjectFsFaultResponse\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x05R\x02id\"E\n" +
+	"\x15InjectBlkFaultRequest\x12,\n" +
+	"\x05fault\x18\x01 \x01(\v2\x16.slowfs.proto.BlkFaultR\x05fault\"(\n" +
+	"\x16InjectBlkFaultResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\"O\n" +
 	"\x12DeleteFaultRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x03(\x05R\x02id\x12\x17\n" +
@@ -977,12 +1104,13 @@ const file_slowfs_proto_rawDesc = "" +
 	"BLK_READAT\x10\x01\x12\x0f\n" +
 	"\vBLK_WRITEAT\x10\x02\x12\f\n" +
 	"\bBLK_SIZE\x10\x03\x12\f\n" +
-	"\bBLK_SYNC\x10\x042\xfa\x01\n" +
-	"\x06SlowFs\x12R\n" +
-	"\vDeleteFault\x12 .slowfs.proto.DeleteFaultRequest\x1a!.slowfs.proto.DeleteFaultResponse\x12B\n" +
+	"\bBLK_SYNC\x10\x042\xd7\x02\n" +
+	"\x06SlowFs\x12B\n" +
 	"\n" +
-	"ListFaults\x12\x12.slowfs.proto.Void\x1a .slowfs.proto.ListFaultsResponse\x12X\n" +
-	"\rInjectFsFault\x12\".slowfs.proto.InjectFsFaultRequest\x1a#.slowfs.proto.InjectFsFaultResponseB Z\x1egithub.com/fanyang89/slowfs/pbb\x06proto3"
+	"ListFaults\x12\x12.slowfs.proto.Void\x1a .slowfs.proto.ListFaultsResponse\x12R\n" +
+	"\vDeleteFault\x12 .slowfs.proto.DeleteFaultRequest\x1a!.slowfs.proto.DeleteFaultResponse\x12X\n" +
+	"\rInjectFsFault\x12\".slowfs.proto.InjectFsFaultRequest\x1a#.slowfs.proto.InjectFsFaultResponse\x12[\n" +
+	"\x0eInjectBlkFault\x12#.slowfs.proto.InjectBlkFaultRequest\x1a$.slowfs.proto.InjectBlkFaultResponseB Z\x1egithub.com/fanyang89/slowfs/pbb\x06proto3"
 
 var (
 	file_slowfs_proto_rawDescOnce sync.Once
@@ -997,21 +1125,23 @@ func file_slowfs_proto_rawDescGZIP() []byte {
 }
 
 var file_slowfs_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_slowfs_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_slowfs_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_slowfs_proto_goTypes = []any{
-	(FsOp)(0),                     // 0: slowfs.proto.FsOp
-	(BlkOp)(0),                    // 1: slowfs.proto.BlkOp
-	(*ReturnValueFault)(nil),      // 2: slowfs.proto.ReturnValueFault
-	(*DelayFault)(nil),            // 3: slowfs.proto.DelayFault
-	(*FsFault)(nil),               // 4: slowfs.proto.FsFault
-	(*ErrorFault)(nil),            // 5: slowfs.proto.ErrorFault
-	(*BlkFault)(nil),              // 6: slowfs.proto.BlkFault
-	(*InjectFsFaultRequest)(nil),  // 7: slowfs.proto.InjectFsFaultRequest
-	(*InjectFsFaultResponse)(nil), // 8: slowfs.proto.InjectFsFaultResponse
-	(*DeleteFaultRequest)(nil),    // 9: slowfs.proto.DeleteFaultRequest
-	(*DeleteFaultResponse)(nil),   // 10: slowfs.proto.DeleteFaultResponse
-	(*Void)(nil),                  // 11: slowfs.proto.Void
-	(*ListFaultsResponse)(nil),    // 12: slowfs.proto.ListFaultsResponse
+	(FsOp)(0),                      // 0: slowfs.proto.FsOp
+	(BlkOp)(0),                     // 1: slowfs.proto.BlkOp
+	(*ReturnValueFault)(nil),       // 2: slowfs.proto.ReturnValueFault
+	(*DelayFault)(nil),             // 3: slowfs.proto.DelayFault
+	(*FsFault)(nil),                // 4: slowfs.proto.FsFault
+	(*ErrorFault)(nil),             // 5: slowfs.proto.ErrorFault
+	(*BlkFault)(nil),               // 6: slowfs.proto.BlkFault
+	(*InjectFsFaultRequest)(nil),   // 7: slowfs.proto.InjectFsFaultRequest
+	(*InjectFsFaultResponse)(nil),  // 8: slowfs.proto.InjectFsFaultResponse
+	(*InjectBlkFaultRequest)(nil),  // 9: slowfs.proto.InjectBlkFaultRequest
+	(*InjectBlkFaultResponse)(nil), // 10: slowfs.proto.InjectBlkFaultResponse
+	(*DeleteFaultRequest)(nil),     // 11: slowfs.proto.DeleteFaultRequest
+	(*DeleteFaultResponse)(nil),    // 12: slowfs.proto.DeleteFaultResponse
+	(*Void)(nil),                   // 13: slowfs.proto.Void
+	(*ListFaultsResponse)(nil),     // 14: slowfs.proto.ListFaultsResponse
 }
 var file_slowfs_proto_depIdxs = []int32{
 	0,  // 0: slowfs.proto.FsFault.op:type_name -> slowfs.proto.FsOp
@@ -1022,19 +1152,22 @@ var file_slowfs_proto_depIdxs = []int32{
 	5,  // 5: slowfs.proto.BlkFault.error_fault:type_name -> slowfs.proto.ErrorFault
 	3,  // 6: slowfs.proto.BlkFault.delay_fault:type_name -> slowfs.proto.DelayFault
 	4,  // 7: slowfs.proto.InjectFsFaultRequest.fault:type_name -> slowfs.proto.FsFault
-	4,  // 8: slowfs.proto.ListFaultsResponse.fs_faults:type_name -> slowfs.proto.FsFault
-	6,  // 9: slowfs.proto.ListFaultsResponse.blk_faults:type_name -> slowfs.proto.BlkFault
-	9,  // 10: slowfs.proto.SlowFs.DeleteFault:input_type -> slowfs.proto.DeleteFaultRequest
-	11, // 11: slowfs.proto.SlowFs.ListFaults:input_type -> slowfs.proto.Void
-	7,  // 12: slowfs.proto.SlowFs.InjectFsFault:input_type -> slowfs.proto.InjectFsFaultRequest
-	10, // 13: slowfs.proto.SlowFs.DeleteFault:output_type -> slowfs.proto.DeleteFaultResponse
-	12, // 14: slowfs.proto.SlowFs.ListFaults:output_type -> slowfs.proto.ListFaultsResponse
-	8,  // 15: slowfs.proto.SlowFs.InjectFsFault:output_type -> slowfs.proto.InjectFsFaultResponse
-	13, // [13:16] is the sub-list for method output_type
-	10, // [10:13] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	6,  // 8: slowfs.proto.InjectBlkFaultRequest.fault:type_name -> slowfs.proto.BlkFault
+	4,  // 9: slowfs.proto.ListFaultsResponse.fs_faults:type_name -> slowfs.proto.FsFault
+	6,  // 10: slowfs.proto.ListFaultsResponse.blk_faults:type_name -> slowfs.proto.BlkFault
+	13, // 11: slowfs.proto.SlowFs.ListFaults:input_type -> slowfs.proto.Void
+	11, // 12: slowfs.proto.SlowFs.DeleteFault:input_type -> slowfs.proto.DeleteFaultRequest
+	7,  // 13: slowfs.proto.SlowFs.InjectFsFault:input_type -> slowfs.proto.InjectFsFaultRequest
+	9,  // 14: slowfs.proto.SlowFs.InjectBlkFault:input_type -> slowfs.proto.InjectBlkFaultRequest
+	14, // 15: slowfs.proto.SlowFs.ListFaults:output_type -> slowfs.proto.ListFaultsResponse
+	12, // 16: slowfs.proto.SlowFs.DeleteFault:output_type -> slowfs.proto.DeleteFaultResponse
+	8,  // 17: slowfs.proto.SlowFs.InjectFsFault:output_type -> slowfs.proto.InjectFsFaultResponse
+	10, // 18: slowfs.proto.SlowFs.InjectBlkFault:output_type -> slowfs.proto.InjectBlkFaultResponse
+	15, // [15:19] is the sub-list for method output_type
+	11, // [11:15] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_slowfs_proto_init() }
@@ -1047,6 +1180,7 @@ func file_slowfs_proto_init() {
 		(*FsFault_DelayFault)(nil),
 	}
 	file_slowfs_proto_msgTypes[4].OneofWrappers = []any{
+		(*BlkFault_Expression)(nil),
 		(*BlkFault_ReturnValueFault)(nil),
 		(*BlkFault_ErrorFault)(nil),
 		(*BlkFault_DelayFault)(nil),
@@ -1057,7 +1191,7 @@ func file_slowfs_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_slowfs_proto_rawDesc), len(file_slowfs_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   11,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

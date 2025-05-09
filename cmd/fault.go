@@ -20,27 +20,183 @@ var faultCommand = &cli.Command{
 	Name:  "fault",
 	Usage: "Fault injection commands",
 	Commands: []*cli.Command{
-		injectLatencyCommand,
-		injectErrorCommand,
+		faultFsCommand,
+		faultBlkCommand,
 		listFaultCommand,
 		clearFaultCommand,
 		removeFaultCommand,
 	},
 }
 
-var injectLatencyCommand = &cli.Command{
+var faultFsCommand = &cli.Command{
+	Name:  "fs",
+	Usage: "Fault injection commands for filesystem",
+	Commands: []*cli.Command{
+		injectFsDelayCommand,
+		injectFsReturnValueCommand,
+	},
+}
+
+var faultBlkCommand = &cli.Command{
+	Name:  "blk",
+	Usage: "Fault injection commands for block device",
+	Commands: []*cli.Command{
+		injectBlkDelayCommand,
+		injectBlkReturnValueCommand,
+		injectBlkErrorCommand,
+	},
+}
+
+var injectBlkDelayCommand = &cli.Command{
+	Name:  "inject-delay",
+	Usage: "inject delay for block device",
+	Flags: []cli.Flag{
+		flagAddress,
+		flagPossibility,
+		flagBlkOp,
+		flagPreCond,
+		flagDelay,
+	},
+	Action: func(ctx context.Context, command *cli.Command) error {
+		address := command.String("address")
+		conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			return err
+		}
+		defer func() { _ = conn.Close() }()
+		client := pb.NewSlowFsClient(conn)
+
+		fault := &pb.BlkFault{
+			Op: command.Value("op").(pb.BlkOp),
+			Delay: &pb.BlkFault_DelayFault{
+				DelayFault: &pb.DelayFault{
+					Possibility: command.Float32("possibility"),
+					DelayMs:     command.Duration("delay").Milliseconds(),
+				},
+			},
+		}
+
+		preCond := command.String("pre-cond")
+		if preCond != "" {
+			fault.PreCond = &pb.BlkFault_Expression{
+				Expression: preCond,
+			}
+		}
+
+		rsp, err := client.InjectBlkFault(ctx, &pb.InjectBlkFaultRequest{Fault: fault})
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("Fault injected, id: %d\n", rsp.GetId())
+		return nil
+	},
+}
+
+var injectBlkErrorCommand = &cli.Command{
+	Name:  "inject-error",
+	Usage: "inject error for block device",
+	Flags: []cli.Flag{
+		flagAddress,
+		flagPossibility,
+		flagBlkOp,
+		flagPreCond,
+		&cli.StringFlag{
+			Name:     "error",
+			Required: true,
+		},
+	},
+	Action: func(ctx context.Context, command *cli.Command) error {
+		address := command.String("address")
+		conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			return err
+		}
+		defer func() { _ = conn.Close() }()
+		client := pb.NewSlowFsClient(conn)
+
+		fault := &pb.BlkFault{
+			Op: command.Value("op").(pb.BlkOp),
+			Err: &pb.BlkFault_ErrorFault{
+				ErrorFault: &pb.ErrorFault{
+					Possibility: command.Float32("possibility"),
+					Err:         command.String("error"),
+				},
+			},
+		}
+
+		preCond := command.String("pre-cond")
+		if preCond != "" {
+			fault.PreCond = &pb.BlkFault_Expression{
+				Expression: preCond,
+			}
+		}
+
+		rsp, err := client.InjectBlkFault(ctx, &pb.InjectBlkFaultRequest{Fault: fault})
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("Fault injected, id: %d\n", rsp.GetId())
+		return nil
+	},
+}
+
+var injectBlkReturnValueCommand = &cli.Command{
+	Name:  "inject-return-value",
+	Usage: "inject return value for block device",
+	Flags: []cli.Flag{
+		flagAddress,
+		flagPossibility,
+		flagReturnValue,
+		flagBlkOp,
+		flagPreCond,
+	},
+	Action: func(ctx context.Context, command *cli.Command) error {
+		address := command.String("address")
+		conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			return err
+		}
+		defer func() { _ = conn.Close() }()
+		client := pb.NewSlowFsClient(conn)
+
+		fault := &pb.BlkFault{
+			Op: command.Value("op").(pb.BlkOp),
+			ReturnValue: &pb.BlkFault_ReturnValueFault{
+				ReturnValueFault: &pb.ReturnValueFault{
+					Possibility: command.Float32("possibility"),
+					ReturnValue: command.Int64("return-value"),
+				},
+			},
+		}
+
+		preCond := command.String("pre-cond")
+		if preCond != "" {
+			fault.PreCond = &pb.BlkFault_Expression{
+				Expression: preCond,
+			}
+		}
+
+		rsp, err := client.InjectBlkFault(ctx, &pb.InjectBlkFaultRequest{Fault: fault})
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("Fault injected, id: %d\n", rsp.GetId())
+		return nil
+	},
+}
+
+var injectFsDelayCommand = &cli.Command{
 	Name:  "inject-latency",
-	Usage: "Inject latency to the filesystem",
+	Usage: "Inject delay to the filesystem",
 	Flags: []cli.Flag{
 		flagAddress,
 		flagPathRegex,
 		flagPossibility,
-		flagOp,
-		&cli.DurationFlag{
-			Name:     "delay",
-			Aliases:  []string{"d", "lat"},
-			Required: true,
-		},
+		flagFsOp,
+		flagDelay,
 	},
 	Action: func(ctx context.Context, command *cli.Command) error {
 		address := command.String("address")
@@ -203,19 +359,15 @@ var listFaultCommand = &cli.Command{
 	},
 }
 
-var injectErrorCommand = &cli.Command{
+var injectFsReturnValueCommand = &cli.Command{
 	Name:  "inject-return-value",
 	Usage: "Inject return-value fault to the filesystem",
 	Flags: []cli.Flag{
 		flagAddress,
 		flagPathRegex,
 		flagPossibility,
-		flagOp,
-		&cli.Int64Flag{
-			Name:     "return-value",
-			Aliases:  []string{"rc", "ec"},
-			Required: true,
-		},
+		flagFsOp,
+		flagReturnValue,
 	},
 	Action: func(ctx context.Context, command *cli.Command) error {
 		address := command.String("address")

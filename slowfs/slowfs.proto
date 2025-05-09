@@ -5,9 +5,10 @@ package slowfs.proto;
 option go_package = "github.com/fanyang89/slowfs/pb";
 
 service SlowFs {
-  rpc DeleteFault(DeleteFaultRequest) returns (DeleteFaultResponse);
   rpc ListFaults(Void) returns (ListFaultsResponse);
+  rpc DeleteFault(DeleteFaultRequest) returns (DeleteFaultResponse);
   rpc InjectFsFault(InjectFsFaultRequest) returns (InjectFsFaultResponse);
+  rpc InjectBlkFault(InjectBlkFaultRequest) returns (InjectBlkFaultResponse);
 }
 
 message ReturnValueFault {
@@ -43,6 +44,10 @@ message BlkFault {
   int32 id = 1;
   BlkOp op = 2;
 
+  oneof pre_cond {
+    string expression = 6;
+  }
+
   oneof return_value {
     ReturnValueFault return_value_fault = 3;
   }
@@ -61,6 +66,14 @@ message InjectFsFaultRequest {
 }
 
 message InjectFsFaultResponse {
+  int32 id = 1;
+}
+
+message InjectBlkFaultRequest {
+  BlkFault fault = 1;
+}
+
+message InjectBlkFaultResponse {
   int32 id = 1;
 }
 

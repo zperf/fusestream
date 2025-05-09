@@ -1,6 +1,8 @@
 package cmd
 
-import "github.com/urfave/cli/v3"
+import (
+	"github.com/urfave/cli/v3"
+)
 
 var flagAddress = &cli.StringFlag{
 	Name:    "address",
@@ -35,9 +37,33 @@ var flagPossibility = &cli.Float32Flag{
 	Required: true,
 }
 
-var flagOp = &cli.GenericFlag{
+var flagFsOp = &cli.GenericFlag{
 	Name:     "op",
 	Usage:    "The operation type",
-	Value:    &OpCodeEnumValue{},
+	Value:    NewFsOpCliEnum(),
+	Required: true,
+}
+
+var flagBlkOp = &cli.GenericFlag{
+	Name:     "op",
+	Usage:    "The operation type",
+	Value:    NewBlkOpCliEnum(),
+	Required: true,
+}
+
+var flagPreCond = &cli.StringFlag{
+	Name:    "pre-cond",
+	Aliases: []string{"pred"},
+}
+
+var flagDelay = &cli.DurationFlag{
+	Name:     "delay",
+	Aliases:  []string{"d", "lat"},
+	Required: true,
+}
+
+var flagReturnValue = &cli.Int64Flag{
+	Name:     "return-value",
+	Aliases:  []string{"rc", "ec"},
 	Required: true,
 }
