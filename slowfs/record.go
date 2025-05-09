@@ -13,7 +13,7 @@ type Record struct {
 	Fh        uint64 `json:"fh,omitzero"`
 }
 
-func NewRecord(path string, ec int, op pb.OpCode) *Record {
+func NewRecord(path string, ec int, op pb.FsOp) *Record {
 	return &Record{
 		Path:      path,
 		ErrorCode: ec,
@@ -178,7 +178,7 @@ type ReadWriteRecord struct {
 
 type FsyncRecord struct {
 	Record
-	DataSync bool `json:"data_sync"`
+	IsDataSync bool `json:"is_data_sync"`
 }
 
 type ReaddirRecord struct {

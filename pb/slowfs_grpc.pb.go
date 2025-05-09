@@ -19,20 +19,18 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SlowFs_InjectError_FullMethodName   = "/slowfs.proto.SlowFs/InjectError"
-	SlowFs_InjectLatency_FullMethodName = "/slowfs.proto.SlowFs/InjectLatency"
 	SlowFs_DeleteFault_FullMethodName   = "/slowfs.proto.SlowFs/DeleteFault"
 	SlowFs_ListFaults_FullMethodName    = "/slowfs.proto.SlowFs/ListFaults"
+	SlowFs_InjectFsFault_FullMethodName = "/slowfs.proto.SlowFs/InjectFsFault"
 )
 
 // SlowFsClient is the client API for SlowFs service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SlowFsClient interface {
-	InjectError(ctx context.Context, in *InjectErrorRequest, opts ...grpc.CallOption) (*InjectErrorResponse, error)
-	InjectLatency(ctx context.Context, in *InjectLatencyRequest, opts ...grpc.CallOption) (*InjectLatencyResponse, error)
 	DeleteFault(ctx context.Context, in *DeleteFaultRequest, opts ...grpc.CallOption) (*DeleteFaultResponse, error)
 	ListFaults(ctx context.Context, in *Void, opts ...grpc.CallOption) (*ListFaultsResponse, error)
+	InjectFsFault(ctx context.Context, in *InjectFsFaultRequest, opts ...grpc.CallOption) (*InjectFsFaultResponse, error)
 }
 
 type slowFsClient struct {
@@ -41,26 +39,6 @@ type slowFsClient struct {
 
 func NewSlowFsClient(cc grpc.ClientConnInterface) SlowFsClient {
 	return &slowFsClient{cc}
-}
-
-func (c *slowFsClient) InjectError(ctx context.Context, in *InjectErrorRequest, opts ...grpc.CallOption) (*InjectErrorResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(InjectErrorResponse)
-	err := c.cc.Invoke(ctx, SlowFs_InjectError_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *slowFsClient) InjectLatency(ctx context.Context, in *InjectLatencyRequest, opts ...grpc.CallOption) (*InjectLatencyResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(InjectLatencyResponse)
-	err := c.cc.Invoke(ctx, SlowFs_InjectLatency_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *slowFsClient) DeleteFault(ctx context.Context, in *DeleteFaultRequest, opts ...grpc.CallOption) (*DeleteFaultResponse, error) {
@@ -83,14 +61,23 @@ func (c *slowFsClient) ListFaults(ctx context.Context, in *Void, opts ...grpc.Ca
 	return out, nil
 }
 
+func (c *slowFsClient) InjectFsFault(ctx context.Context, in *InjectFsFaultRequest, opts ...grpc.CallOption) (*InjectFsFaultResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(InjectFsFaultResponse)
+	err := c.cc.Invoke(ctx, SlowFs_InjectFsFault_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SlowFsServer is the server API for SlowFs service.
 // All implementations must embed UnimplementedSlowFsServer
 // for forward compatibility.
 type SlowFsServer interface {
-	InjectError(context.Context, *InjectErrorRequest) (*InjectErrorResponse, error)
-	InjectLatency(context.Context, *InjectLatencyRequest) (*InjectLatencyResponse, error)
 	DeleteFault(context.Context, *DeleteFaultRequest) (*DeleteFaultResponse, error)
 	ListFaults(context.Context, *Void) (*ListFaultsResponse, error)
+	InjectFsFault(context.Context, *InjectFsFaultRequest) (*InjectFsFaultResponse, error)
 	mustEmbedUnimplementedSlowFsServer()
 }
 
@@ -101,17 +88,14 @@ type SlowFsServer interface {
 // pointer dereference when methods are called.
 type UnimplementedSlowFsServer struct{}
 
-func (UnimplementedSlowFsServer) InjectError(context.Context, *InjectErrorRequest) (*InjectErrorResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method InjectError not implemented")
-}
-func (UnimplementedSlowFsServer) InjectLatency(context.Context, *InjectLatencyRequest) (*InjectLatencyResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method InjectLatency not implemented")
-}
 func (UnimplementedSlowFsServer) DeleteFault(context.Context, *DeleteFaultRequest) (*DeleteFaultResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteFault not implemented")
 }
 func (UnimplementedSlowFsServer) ListFaults(context.Context, *Void) (*ListFaultsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListFaults not implemented")
+}
+func (UnimplementedSlowFsServer) InjectFsFault(context.Context, *InjectFsFaultRequest) (*InjectFsFaultResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method InjectFsFault not implemented")
 }
 func (UnimplementedSlowFsServer) mustEmbedUnimplementedSlowFsServer() {}
 func (UnimplementedSlowFsServer) testEmbeddedByValue()                {}
@@ -132,42 +116,6 @@ func RegisterSlowFsServer(s grpc.ServiceRegistrar, srv SlowFsServer) {
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&SlowFs_ServiceDesc, srv)
-}
-
-func _SlowFs_InjectError_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(InjectErrorRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SlowFsServer).InjectError(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: SlowFs_InjectError_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SlowFsServer).InjectError(ctx, req.(*InjectErrorRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _SlowFs_InjectLatency_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(InjectLatencyRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SlowFsServer).InjectLatency(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: SlowFs_InjectLatency_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SlowFsServer).InjectLatency(ctx, req.(*InjectLatencyRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _SlowFs_DeleteFault_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -206,6 +154,24 @@ func _SlowFs_ListFaults_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SlowFs_InjectFsFault_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InjectFsFaultRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SlowFsServer).InjectFsFault(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SlowFs_InjectFsFault_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SlowFsServer).InjectFsFault(ctx, req.(*InjectFsFaultRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SlowFs_ServiceDesc is the grpc.ServiceDesc for SlowFs service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -214,20 +180,16 @@ var SlowFs_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*SlowFsServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "InjectError",
-			Handler:    _SlowFs_InjectError_Handler,
-		},
-		{
-			MethodName: "InjectLatency",
-			Handler:    _SlowFs_InjectLatency_Handler,
-		},
-		{
 			MethodName: "DeleteFault",
 			Handler:    _SlowFs_DeleteFault_Handler,
 		},
 		{
 			MethodName: "ListFaults",
 			Handler:    _SlowFs_ListFaults_Handler,
+		},
+		{
+			MethodName: "InjectFsFault",
+			Handler:    _SlowFs_InjectFsFault_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

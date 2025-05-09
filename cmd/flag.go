@@ -5,8 +5,13 @@ import "github.com/urfave/cli/v3"
 var flagAddress = &cli.StringFlag{
 	Name:    "address",
 	Aliases: []string{"a"},
-	Usage:   "The RPC server address connect to",
+	Usage:   "The server address connect to",
 	Value:   "127.0.0.1:4321",
+}
+
+var flagNetwork = &cli.StringFlag{
+	Name:  "network",
+	Value: "tcp",
 }
 
 var flagVerbose = &cli.BoolFlag{

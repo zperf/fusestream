@@ -22,6 +22,12 @@ var mountCommand = &cli.Command{
 	Flags: []cli.Flag{
 		flagVerbose,
 		&cli.StringFlag{
+			Name:    "listen",
+			Aliases: []string{"l"},
+			Usage:   "The RPC server listen address",
+			Value:   "127.0.0.1:4321",
+		},
+		&cli.StringFlag{
 			Name:     "base-dir",
 			Aliases:  []string{"b"},
 			Usage:    "Data base directory",
@@ -32,12 +38,6 @@ var mountCommand = &cli.Command{
 			Aliases:  []string{"m"},
 			Usage:    "Mount point",
 			Required: true,
-		},
-		&cli.StringFlag{
-			Name:    "listen",
-			Aliases: []string{"l"},
-			Usage:   "RPC server listen address",
-			Value:   "127.0.0.1:4321",
 		},
 		&cli.BoolFlag{
 			Name:  "use-ino",

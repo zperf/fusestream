@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/rodaine/table"
@@ -35,8 +37,8 @@ var injectLatencyCommand = &cli.Command{
 		flagPossibility,
 		flagOp,
 		&cli.DurationFlag{
-			Name:     "latency",
-			Aliases:  []string{"l", "lat"},
+			Name:     "delay",
+			Aliases:  []string{"d", "lat"},
 			Required: true,
 		},
 	},
@@ -49,12 +51,19 @@ var injectLatencyCommand = &cli.Command{
 		defer func() { _ = conn.Close() }()
 
 		client := pb.NewSlowFsClient(conn)
-		rsp, err := client.InjectLatency(ctx, &pb.InjectLatencyRequest{
-			PathRe:      command.String("path-regex"),
-			Op:          command.Value("op").(pb.OpCode),
-			LatencyMs:   command.Duration("latency").Milliseconds(),
-			Possibility: command.Float32("possibility"),
-		})
+
+		fault := &pb.FsFault{
+			PathRe: command.String("path-regex"),
+			Op:     command.Value("op").(pb.FsOp),
+			Delay: &pb.FsFault_DelayFault{
+				DelayFault: &pb.DelayFault{
+					Possibility: command.Float32("possibility"),
+					DelayMs:     command.Duration("delay").Milliseconds(),
+				},
+			},
+		}
+
+		rsp, err := client.InjectFsFault(ctx, &pb.InjectFsFaultRequest{Fault: fault})
 		if err != nil {
 			return err
 		}
@@ -138,24 +147,55 @@ var listFaultCommand = &cli.Command{
 			return err
 		}
 
-		tbl := table.New("ID", "Path", "Op", "Fault")
+		tbl := table.New("ID", "Type", "Path", "Op", "Fault")
 		tbl.WithHeaderFormatter(color.New(color.FgGreen, color.Underline).SprintfFunc()).
 			WithFirstColumnFormatter(color.New(color.FgYellow).SprintfFunc())
 
-		for _, f := range rsp.GetFaults() {
-			var fault string
-			var op string
-			switch m := f.GetFault().(type) {
-			case *pb.FaultVariant_InjectLatencyRequest:
-				req := m.InjectLatencyRequest
-				fault = fmt.Sprintf("lat/%vms/p=%.2f", req.LatencyMs, req.Possibility)
-				op = req.Op.String()
-			case *pb.FaultVariant_InjectErrorRequest:
-				req := m.InjectErrorRequest
-				fault = fmt.Sprintf("err/rc=%v/p=%.2f", req.ErrorCode, req.Possibility)
-				op = req.Op.String()
+		for _, f := range rsp.FsFaults {
+			faults := make([]string, 0)
+
+			switch m := f.Delay.(type) {
+			case *pb.FsFault_DelayFault:
+				faults = append(faults, fmt.Sprintf("delay{p=%.2f,v=%v}",
+					m.DelayFault.Possibility,
+					time.Duration(m.DelayFault.DelayMs)*time.Millisecond))
 			}
-			tbl.AddRow(f.Id, f.Path, op, fault)
+
+			switch m := f.ReturnValue.(type) {
+			case *pb.FsFault_ReturnValueFault:
+				faults = append(faults, fmt.Sprintf("rc{p=%.2f,v=%v}",
+					m.ReturnValueFault.Possibility,
+					m.ReturnValueFault.ReturnValue))
+			}
+
+			tbl.AddRow(f.Id, "fs", f.PathRe, f.Op.String(), strings.Join(faults, "/"))
+		}
+
+		for _, f := range rsp.BlkFaults {
+			faults := make([]string, 0)
+
+			switch m := f.Delay.(type) {
+			case *pb.BlkFault_DelayFault:
+				faults = append(faults, fmt.Sprintf("delay{p=%.2f,v=%v}",
+					m.DelayFault.Possibility,
+					time.Duration(m.DelayFault.DelayMs)*time.Millisecond))
+			}
+
+			switch m := f.ReturnValue.(type) {
+			case *pb.BlkFault_ReturnValueFault:
+				faults = append(faults, fmt.Sprintf("rc{p=%.2f,v=%v}",
+					m.ReturnValueFault.Possibility,
+					m.ReturnValueFault.ReturnValue))
+			}
+
+			switch m := f.Err.(type) {
+			case *pb.BlkFault_ErrorFault:
+				faults = append(faults, fmt.Sprintf("err{p=%.2f,v=%v}",
+					m.ErrorFault.Possibility,
+					m.ErrorFault.Err))
+			}
+
+			tbl.AddRow(f.Id, "blk", "/", f.Op.String(), strings.Join(faults, "/"))
 		}
 
 		tbl.Print()
@@ -164,15 +204,15 @@ var listFaultCommand = &cli.Command{
 }
 
 var injectErrorCommand = &cli.Command{
-	Name:  "inject-error",
-	Usage: "Inject error-code to the filesystem",
+	Name:  "inject-return-value",
+	Usage: "Inject return-value fault to the filesystem",
 	Flags: []cli.Flag{
 		flagAddress,
 		flagPathRegex,
 		flagPossibility,
 		flagOp,
-		&cli.Int32Flag{
-			Name:     "error-code",
+		&cli.Int64Flag{
+			Name:     "return-value",
 			Aliases:  []string{"rc", "ec"},
 			Required: true,
 		},
@@ -186,11 +226,17 @@ var injectErrorCommand = &cli.Command{
 		defer func() { _ = conn.Close() }()
 
 		client := pb.NewSlowFsClient(conn)
-		rsp, err := client.InjectError(ctx, &pb.InjectErrorRequest{
-			PathRe:      command.String("path-regex"),
-			Op:          command.Value("op").(pb.OpCode),
-			ErrorCode:   command.Int32("error-code"),
-			Possibility: command.Float32("possibility"),
+		rsp, err := client.InjectFsFault(ctx, &pb.InjectFsFaultRequest{
+			Fault: &pb.FsFault{
+				PathRe: command.String("path-regex"),
+				Op:     command.Value("op").(pb.FsOp),
+				ReturnValue: &pb.FsFault_ReturnValueFault{
+					ReturnValueFault: &pb.ReturnValueFault{
+						Possibility: command.Float32("possibility"),
+						ReturnValue: command.Int64("return-value"),
+					},
+				},
+			},
 		})
 		if err != nil {
 			return err

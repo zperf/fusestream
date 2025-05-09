@@ -8,7 +8,7 @@ import (
 )
 
 type OpCodeEnumValue struct {
-	selected pb.OpCode
+	selected pb.FsOp
 }
 
 func (e *OpCodeEnumValue) Get() any {
@@ -16,15 +16,15 @@ func (e *OpCodeEnumValue) Get() any {
 }
 
 func (e *OpCodeEnumValue) Set(value string) error {
-	op, ok := pb.OpCode_value[value]
+	op, ok := pb.FsOp_value[value]
 	if !ok {
-		keys := make([]string, 0, len(pb.OpCode_value))
-		for k := range pb.OpCode_value {
+		keys := make([]string, 0, len(pb.FsOp_value))
+		for k := range pb.FsOp_value {
 			keys = append(keys, k)
 		}
 		return fmt.Errorf("invalid opcode: %s. Allowed values are %s", value, strings.Join(keys, ", "))
 	}
-	e.selected = pb.OpCode(op)
+	e.selected = pb.FsOp(op)
 	return nil
 }
 

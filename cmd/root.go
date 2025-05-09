@@ -11,5 +11,6 @@ var RootCommand = &cli.Command{
 		mountCommand,
 		faultCommand,
 		regexCommand,
+		nbdCommand,
 	},
 }

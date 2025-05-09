@@ -1,0 +1,227 @@
+package slowfs
+
+import (
+	"sync"
+	"sync/atomic"
+	"time"
+
+	"github.com/rs/zerolog/log"
+
+	"github.com/fanyang89/slowfs/pb"
+)
+
+type FsFaultKey struct {
+	Path string
+	Op   pb.FsOp
+}
+
+type FsFault struct {
+	ID     int32
+	PathRe string
+	Op     pb.FsOp
+
+	ReturnValue            *int32
+	ReturnValuePossibility float32
+
+	Delay            *time.Duration
+	DelayPossibility float32
+}
+
+func (f *FsFault) Clone() *FsFault {
+	rc := *f.ReturnValue
+	d := *f.Delay
+	return &FsFault{
+		ID:                     f.ID,
+		PathRe:                 f.PathRe,
+		Op:                     f.Op,
+		ReturnValue:            &rc,
+		ReturnValuePossibility: f.ReturnValuePossibility,
+		Delay:                  &d,
+		DelayPossibility:       f.DelayPossibility,
+	}
+}
+
+type BlkFault struct {
+	ID int32
+	Op pb.BlkOp
+
+	ReturnValue            *int64
+	ReturnValuePossibility float32
+
+	Err            *error
+	ErrPossibility float32
+
+	Delay            *time.Duration
+	DelayPossibility float32
+}
+
+func (f *BlkFault) Clone() *BlkFault {
+	rc := *f.ReturnValue
+	err := *f.Err
+	d := *f.Delay
+	return &BlkFault{
+		ID:                     f.ID,
+		Op:                     f.Op,
+		ReturnValue:            &rc,
+		ReturnValuePossibility: f.ReturnValuePossibility,
+		Err:                    &err,
+		ErrPossibility:         f.ErrPossibility,
+		Delay:                  &d,
+		DelayPossibility:       f.DelayPossibility,
+	}
+}
+
+type FaultManager struct {
+	regexCache *RegexCache
+	nextID     int32
+
+	mutex       sync.RWMutex
+	fsFaultMap  map[FsFaultKey]*FsFault // guarded by mutex
+	blkFaultMap map[pb.BlkOp]*BlkFault  // guarded by mutex
+
+}
+
+func NewFaultManager() *FaultManager {
+	return &FaultManager{
+		regexCache:  NewRegexCache(),
+		fsFaultMap:  make(map[FsFaultKey]*FsFault),
+		blkFaultMap: make(map[pb.BlkOp]*BlkFault),
+	}
+}
+
+func (f *FaultManager) getNextID() int32 {
+	return atomic.AddInt32(&f.nextID, 1) - 1
+}
+
+func (f *FaultManager) GetFsFault(path string, op pb.FsOp) FaultExecute {
+	f.mutex.RLock()
+	defer f.mutex.RUnlock()
+
+	for key, fsFault := range f.fsFaultMap {
+		if key.Op != op {
+			continue
+		}
+
+		re, err := f.regexCache.Compile(key.Path)
+		if err != nil {
+			log.Warn().Err(err).Str("regex", key.Path).Msg("Invalid regex")
+			continue
+		}
+
+		if re.Match([]byte(path)) {
+			var fault Fault
+			fault.FromFs(fsFault)
+			if fault.HasValue() {
+				e := log.Trace().Str("path", path).Str("op", op.String())
+				e = fault.AppendTrace(e)
+				e.Msg("Fault injected")
+				return &fault
+			}
+		}
+	}
+
+	return zeroFault
+}
+
+func (f *FaultManager) FsInject(path string, s *FsFault) int32 {
+	f.mutex.Lock()
+	id := f.getNextID()
+	s.ID = id
+	f.fsFaultMap[FsFaultKey{path, s.Op}] = s
+	f.mutex.Unlock()
+	return id
+}
+
+func (f *FaultManager) ListFaults() ([]*FsFault, []*BlkFault) {
+	f.mutex.RLock()
+	m := make([]*FsFault, 0)
+	for _, fault := range f.fsFaultMap {
+		m = append(m, fault.Clone())
+	}
+
+	b := make([]*BlkFault, 0)
+	for _, fault := range f.blkFaultMap {
+		b = append(b, fault.Clone())
+	}
+
+	f.mutex.RUnlock()
+	return m, b
+}
+
+func (f *FaultManager) DeleteAll() []int32 {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	m := f.fsFaultMap
+	f.fsFaultMap = make(map[FsFaultKey]*FsFault)
+
+	deletedIDs := make([]int32, 0)
+	for _, fault := range m {
+		deletedIDs = append(deletedIDs, fault.ID)
+	}
+	return deletedIDs
+}
+
+func (f *FaultManager) DeleteByPathRegex(pathRe string) []int32 {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	deletedIDs := make([]int32, 0)
+	toDelete := make(map[FsFaultKey]struct{})
+
+	for key, fault := range f.fsFaultMap {
+		if key.Path != pathRe {
+			continue
+		}
+		toDelete[key] = struct{}{}
+		deletedIDs = append(deletedIDs, fault.ID)
+	}
+
+	for key := range toDelete {
+		delete(f.fsFaultMap, key)
+	}
+
+	return deletedIDs
+}
+
+func (f *FaultManager) DeleteByID(ids []int32) []int32 {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	idm := make(map[int32]struct{})
+	for _, id := range ids {
+		idm[id] = struct{}{}
+	}
+
+	toDelete := make(map[FsFaultKey]struct{})
+
+	for key, fault := range f.fsFaultMap {
+		_, ok := idm[fault.ID]
+		if ok {
+			toDelete[key] = struct{}{}
+		}
+	}
+
+	for key := range toDelete {
+		delete(f.fsFaultMap, key)
+	}
+
+	return ids
+}
+
+func (f *FaultManager) GetBlkFault(op pb.BlkOp, offset int64, len int) FaultExecute {
+	f.mutex.RLock()
+	defer f.mutex.RUnlock()
+
+	blkFault, ok := f.blkFaultMap[op]
+	if !ok {
+		return zeroFault
+	}
+
+	fault := &Fault{}
+	fault.FromBlk(blkFault)
+	if fault.HasValue() {
+		return fault
+	}
+	return zeroFault
+}

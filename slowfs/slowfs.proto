@@ -4,85 +4,114 @@ package slowfs.proto;
 
 option go_package = "github.com/fanyang89/slowfs/pb";
 
-message InjectErrorRequest {
-  string path_re = 1;
-  OpCode op = 2;
-  int32 error_code = 3;
-  float possibility = 4;
+service SlowFs {
+  rpc DeleteFault(DeleteFaultRequest) returns (DeleteFaultResponse);
+  rpc ListFaults(Void) returns (ListFaultsResponse);
+  rpc InjectFsFault(InjectFsFaultRequest) returns (InjectFsFaultResponse);
 }
 
-message InjectErrorResponse {
+message ReturnValueFault {
+  float possibility = 1;
+  int64 return_value = 2;
+}
+
+message DelayFault {
+  float possibility = 1;
+  int64 delay_ms = 2;
+}
+
+message FsFault {
   int32 id = 1;
+  string path_re = 2;
+  FsOp op = 3;
+
+  oneof return_value {
+    ReturnValueFault return_value_fault = 4;
+  }
+
+  oneof delay {
+    DelayFault delay_fault = 5;
+  }
 }
 
-message InjectLatencyRequest {
-  string path_re = 1;
-  OpCode op = 2;
-  int64 latency_ms = 3;
-  float possibility = 4;
+message ErrorFault {
+  float possibility = 1;
+  string err = 2;
 }
 
-message InjectLatencyResponse {
+message BlkFault {
+  int32 id = 1;
+  BlkOp op = 2;
+
+  oneof return_value {
+    ReturnValueFault return_value_fault = 3;
+  }
+
+  oneof err {
+    ErrorFault error_fault = 4;
+  }
+
+  oneof delay {
+    DelayFault delay_fault = 5;
+  }
+}
+
+message InjectFsFaultRequest {
+  FsFault fault = 1;
+}
+
+message InjectFsFaultResponse {
   int32 id = 1;
 }
 
 message DeleteFaultRequest {
   repeated int32 id = 1;
-  bool all = 2;
-  string path_re = 3;
+  string path_re = 2;
+  bool all = 3;
 }
 
 message DeleteFaultResponse {
-  repeated int32 deleted = 1;
-}
-
-message FaultVariant {
-  int32 id = 1;
-  OpCode op = 2;
-  string path = 3;
-
-  oneof Fault {
-    InjectErrorRequest inject_error_request = 10;
-    InjectLatencyRequest inject_latency_request = 11;
-  }
+  repeated int32 deleted_ids = 1;
 }
 
 message Void {}
 
 message ListFaultsResponse {
-  repeated FaultVariant faults = 1;
+  repeated FsFault fs_faults = 1;
+  repeated BlkFault blk_faults = 2;
 }
 
-service SlowFs {
-  rpc InjectError(InjectErrorRequest) returns (InjectErrorResponse);
-  rpc InjectLatency(InjectLatencyRequest) returns (InjectLatencyResponse);
-  rpc DeleteFault(DeleteFaultRequest) returns (DeleteFaultResponse);
-  rpc ListFaults(Void) returns (ListFaultsResponse);
+enum FsOp {
+  FS_UNKNOWN = 0;
+  FS_STATFS = 1;
+  FS_MKNOD = 2;
+  FS_MKDIR = 3;
+  FS_UNLINK = 4;
+  FS_RMDIR = 5;
+  FS_LINK = 6;
+  FS_SYMLINK = 7;
+  FS_READLINK = 8;
+  FS_RENAME = 9;
+  FS_CHMOD = 10;
+  FS_CHOWN = 11;
+  FS_UTIMENS = 12;
+  FS_CREATE = 13;
+  FS_OPEN = 14;
+  FS_GETATTR = 15;
+  FS_TRUNCATE = 16;
+  FS_READ = 17;
+  FS_WRITE = 18;
+  FS_RELEASE = 19;
+  FS_FSYNC = 20;
+  FS_OPENDIR = 21;
+  FS_READDIR = 22;
+  FS_RELEASEDIR = 23;
 }
 
-enum OpCode {
-  UNKNOWN = 0;
-  STATFS = 1;
-  MKNOD = 2;
-  MKDIR = 3;
-  UNLINK = 4;
-  RMDIR = 5;
-  LINK = 6;
-  SYMLINK = 7;
-  READLINK = 8;
-  RENAME = 9;
-  CHMOD = 10;
-  CHOWN = 11;
-  UTIMENS = 12;
-  CREATE = 13;
-  OPEN = 14;
-  GETATTR = 15;
-  TRUNCATE = 16;
-  READ = 17;
-  WRITE = 18;
-  RELEASE = 19;
-  FSYNC = 20;
-  OPENDIR = 21;
-  READDIR = 22;
-  RELEASEDIR = 23;
+enum BlkOp {
+  BLK_UNKNOWN = 0;
+  BLK_READAT = 1;
+  BLK_WRITEAT = 2;
+  BLK_SIZE = 3;
+  BLK_SYNC = 4;
 }
