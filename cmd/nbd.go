@@ -17,7 +17,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/fanyang89/slowio/pb"
-	"github.com/fanyang89/slowio/slowio"
+	"github.com/fanyang89/slowio/v1"
 )
 
 var nbdCommand = &cli.Command{
