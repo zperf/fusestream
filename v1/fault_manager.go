@@ -30,17 +30,25 @@ type FuseFault struct {
 }
 
 func (f *FuseFault) Clone() *FuseFault {
-	rc := *f.ReturnValue
-	d := *f.Delay
-	return &FuseFault{
+	v := &FuseFault{
 		ID:                     f.ID,
 		PathRe:                 f.PathRe,
 		Op:                     f.Op,
-		ReturnValue:            &rc,
 		ReturnValuePossibility: f.ReturnValuePossibility,
-		Delay:                  &d,
 		DelayPossibility:       f.DelayPossibility,
 	}
+
+	if f.ReturnValue != nil {
+		rc := *f.ReturnValue
+		v.ReturnValue = &rc
+	}
+
+	if f.Delay != nil {
+		d := *f.Delay
+		v.Delay = &d
+	}
+
+	return v
 }
 
 type NbdFault struct {
@@ -60,36 +68,48 @@ type NbdFault struct {
 }
 
 func (f *NbdFault) Clone() *NbdFault {
-	rc := *f.ReturnValue
-	err := *f.Err
-	d := *f.Delay
-	return &NbdFault{
+
+	v := &NbdFault{
 		ID:                     f.ID,
 		Op:                     f.Op,
-		ReturnValue:            &rc,
 		ReturnValuePossibility: f.ReturnValuePossibility,
-		Err:                    &err,
 		ErrPossibility:         f.ErrPossibility,
-		Delay:                  &d,
 		DelayPossibility:       f.DelayPossibility,
 	}
+
+	if f.ReturnValue != nil {
+		rc := *f.ReturnValue
+		v.ReturnValue = &rc
+	}
+
+	if f.Delay != nil {
+		d := *f.Delay
+		v.Delay = &d
+	}
+
+	if f.Err != nil {
+		d := *f.Err
+		v.Err = &d
+	}
+
+	return v
 }
 
 type FaultManager struct {
 	regexCache *RegexCache
 	nextID     int32
 
-	mutex       sync.RWMutex
-	fsFaultMap  map[FuseFaultKey]*FuseFault // guarded by mutex
-	blkFaultMap map[pb.NbdOp]*NbdFault      // guarded by mutex
+	mutex        sync.RWMutex
+	fuseFaultMap map[FuseFaultKey]*FuseFault // guarded by mutex
+	nbdFaultMap  map[pb.NbdOp]*NbdFault      // guarded by mutex
 
 }
 
 func NewFaultManager() *FaultManager {
 	return &FaultManager{
-		regexCache:  NewRegexCache(),
-		fsFaultMap:  make(map[FuseFaultKey]*FuseFault),
-		blkFaultMap: make(map[pb.NbdOp]*NbdFault),
+		regexCache:   NewRegexCache(),
+		fuseFaultMap: make(map[FuseFaultKey]*FuseFault),
+		nbdFaultMap:  make(map[pb.NbdOp]*NbdFault),
 	}
 }
 
@@ -97,11 +117,11 @@ func (f *FaultManager) getNextID() int32 {
 	return atomic.AddInt32(&f.nextID, 1) - 1
 }
 
-func (f *FaultManager) GetFsFault(path string, op pb.FuseOp) FaultExecute {
+func (f *FaultManager) GetFuseFault(path string, op pb.FuseOp) FaultExecute {
 	f.mutex.RLock()
 	defer f.mutex.RUnlock()
 
-	for key, fsFault := range f.fsFaultMap {
+	for key, fuseFault := range f.fuseFaultMap {
 		if key.Op != op {
 			continue
 		}
@@ -114,7 +134,7 @@ func (f *FaultManager) GetFsFault(path string, op pb.FuseOp) FaultExecute {
 
 		if re.Match([]byte(path)) {
 			var fault Fault
-			fault.FromFs(fsFault)
+			fault.FromFuse(fuseFault)
 			if fault.HasValue() {
 				e := log.Trace().Str("path", path).Str("op", op.String())
 				e = fault.AppendTrace(e)
@@ -127,20 +147,20 @@ func (f *FaultManager) GetFsFault(path string, op pb.FuseOp) FaultExecute {
 	return zeroFault
 }
 
-func (f *FaultManager) FsInject(path string, s *FuseFault) int32 {
+func (f *FaultManager) FuseInject(s *FuseFault) int32 {
 	f.mutex.Lock()
 	id := f.getNextID()
 	s.ID = id
-	f.fsFaultMap[FuseFaultKey{path, s.Op}] = s
+	f.fuseFaultMap[FuseFaultKey{s.PathRe, s.Op}] = s
 	f.mutex.Unlock()
 	return id
 }
 
-func (f *FaultManager) BlkInject(s *NbdFault) int32 {
+func (f *FaultManager) NbdInject(s *NbdFault) int32 {
 	f.mutex.Lock()
 	id := f.getNextID()
 	s.ID = id
-	f.blkFaultMap[s.Op] = s
+	f.nbdFaultMap[s.Op] = s
 	f.mutex.Unlock()
 	return id
 }
@@ -148,12 +168,12 @@ func (f *FaultManager) BlkInject(s *NbdFault) int32 {
 func (f *FaultManager) ListFaults() ([]*FuseFault, []*NbdFault) {
 	f.mutex.RLock()
 	m := make([]*FuseFault, 0)
-	for _, fault := range f.fsFaultMap {
+	for _, fault := range f.fuseFaultMap {
 		m = append(m, fault.Clone())
 	}
 
 	b := make([]*NbdFault, 0)
-	for _, fault := range f.blkFaultMap {
+	for _, fault := range f.nbdFaultMap {
 		b = append(b, fault.Clone())
 	}
 
@@ -165,8 +185,8 @@ func (f *FaultManager) DeleteAll() []int32 {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
-	m := f.fsFaultMap
-	f.fsFaultMap = make(map[FuseFaultKey]*FuseFault)
+	m := f.fuseFaultMap
+	f.fuseFaultMap = make(map[FuseFaultKey]*FuseFault)
 
 	deletedIDs := make([]int32, 0)
 	for _, fault := range m {
@@ -182,7 +202,7 @@ func (f *FaultManager) DeleteByPathRegex(pathRe string) []int32 {
 	deletedIDs := make([]int32, 0)
 	toDelete := make(map[FuseFaultKey]struct{})
 
-	for key, fault := range f.fsFaultMap {
+	for key, fault := range f.fuseFaultMap {
 		if key.Path != pathRe {
 			continue
 		}
@@ -191,7 +211,7 @@ func (f *FaultManager) DeleteByPathRegex(pathRe string) []int32 {
 	}
 
 	for key := range toDelete {
-		delete(f.fsFaultMap, key)
+		delete(f.fuseFaultMap, key)
 	}
 
 	return deletedIDs
@@ -208,7 +228,7 @@ func (f *FaultManager) DeleteByID(ids []int32) []int32 {
 
 	toDelete := make(map[FuseFaultKey]struct{})
 
-	for key, fault := range f.fsFaultMap {
+	for key, fault := range f.fuseFaultMap {
 		_, ok := idm[fault.ID]
 		if ok {
 			toDelete[key] = struct{}{}
@@ -216,22 +236,22 @@ func (f *FaultManager) DeleteByID(ids []int32) []int32 {
 	}
 
 	for key := range toDelete {
-		delete(f.fsFaultMap, key)
+		delete(f.fuseFaultMap, key)
 	}
 
 	return ids
 }
 
-func (f *FaultManager) GetBlkFault(op pb.NbdOp, offset int64, len int) FaultExecute {
+func (f *FaultManager) GetNbdFault(op pb.NbdOp, offset int64, len int) FaultExecute {
 	f.mutex.RLock()
 	defer f.mutex.RUnlock()
 
-	blkFault, ok := f.blkFaultMap[op]
+	nbdFault, ok := f.nbdFaultMap[op]
 	if !ok {
 		return zeroFault
 	}
 
-	sc := blkFault.preCond
+	sc := nbdFault.preCond
 	if sc != nil {
 		preCondObject, err := tengo.Eval(context.Background(), *sc, map[string]interface{}{
 			"offset": offset,
@@ -252,7 +272,7 @@ func (f *FaultManager) GetBlkFault(op pb.NbdOp, offset int64, len int) FaultExec
 	}
 
 	fault := &Fault{}
-	fault.FromBlk(blkFault)
+	fault.FromNbd(nbdFault)
 	if fault.HasValue() {
 		e := log.Trace().Str("op", op.String()).Int64("offset", offset).Int("len", len)
 		e = fault.AppendTrace(e)

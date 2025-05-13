@@ -17,14 +17,6 @@ tasks:
     generates:
       - ./bin/slowio
 
-  build-linux:
-    cmds:
-      - GOARCH=amd64 GOOS=linux go build {{.GO_BUILD_FLAGS}} -o bin/linux-amd64/slowio main.go
-
-  build-darwin:
-    cmds:
-      - GOARCH=arm64 GOOS=darwin go build {{.GO_BUILD_FLAGS}} -o bin/darwin-arm64/slowio main.go
-
   clean:
     cmds:
       - rm -rf bin/

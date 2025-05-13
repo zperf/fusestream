@@ -88,7 +88,7 @@ func (f *SlowFS) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
 	errc = errno(syscall.Statfs(path, &stgo))
 	*stat = *newFuseStatfsFromGo(&stgo)
 
-	fault := f.Faults.GetFsFault(path, pb.FuseOp_FUSE_STATFS)
+	fault := f.Faults.GetFuseFault(path, pb.FuseOp_FUSE_STATFS)
 	fault.Delay()
 	errc = int(fault.MayReplaceErrorCode(int64(errc)))
 
@@ -106,7 +106,7 @@ func (f *SlowFS) Mknod(path string, mode uint32, dev uint64) (errc int) {
 	path = filepath.Join(f.BaseDir, path)
 	errc = errno(syscall.Mknod(path, mode, int(dev)))
 
-	fault := f.Faults.GetFsFault(path, pb.FuseOp_FUSE_MKNOD)
+	fault := f.Faults.GetFuseFault(path, pb.FuseOp_FUSE_MKNOD)
 	fault.Delay()
 	errc = int(fault.MayReplaceErrorCode(int64(errc)))
 
@@ -126,7 +126,7 @@ func (f *SlowFS) Mkdir(path string, mode uint32) (errc int) {
 	path = filepath.Join(f.BaseDir, path)
 	errc = errno(syscall.Mkdir(path, mode))
 
-	fault := f.Faults.GetFsFault(path, pb.FuseOp_FUSE_MKDIR)
+	fault := f.Faults.GetFuseFault(path, pb.FuseOp_FUSE_MKDIR)
 	fault.Delay()
 	errc = int(fault.MayReplaceErrorCode(int64(errc)))
 
@@ -140,7 +140,7 @@ func (f *SlowFS) Unlink(path string) (errc int) {
 	path = filepath.Join(f.BaseDir, path)
 	errc = errno(syscall.Unlink(path))
 
-	fault := f.Faults.GetFsFault(path, pb.FuseOp_FUSE_UNLINK)
+	fault := f.Faults.GetFuseFault(path, pb.FuseOp_FUSE_UNLINK)
 	fault.Delay()
 	errc = int(fault.MayReplaceErrorCode(int64(errc)))
 
@@ -152,7 +152,7 @@ func (f *SlowFS) Rmdir(path string) (errc int) {
 	path = filepath.Join(f.BaseDir, path)
 	errc = errno(syscall.Rmdir(path))
 
-	fault := f.Faults.GetFsFault(path, pb.FuseOp_FUSE_RMDIR)
+	fault := f.Faults.GetFuseFault(path, pb.FuseOp_FUSE_RMDIR)
 	fault.Delay()
 	errc = int(fault.MayReplaceErrorCode(int64(errc)))
 
@@ -166,7 +166,7 @@ func (f *SlowFS) Link(oldpath string, newpath string) (errc int) {
 	newpath = filepath.Join(f.BaseDir, newpath)
 	errc = errno(syscall.Link(oldpath, newpath))
 
-	fault := f.Faults.GetFsFault(oldpath, pb.FuseOp_FUSE_LINK)
+	fault := f.Faults.GetFuseFault(oldpath, pb.FuseOp_FUSE_LINK)
 	fault.Delay()
 	errc = int(fault.MayReplaceErrorCode(int64(errc)))
 
@@ -181,7 +181,7 @@ func (f *SlowFS) Symlink(target string, newpath string) (errc int) {
 	newpath = filepath.Join(f.BaseDir, newpath)
 	errc = errno(syscall.Symlink(target, newpath))
 
-	fault := f.Faults.GetFsFault(target, pb.FuseOp_FUSE_SYMLINK)
+	fault := f.Faults.GetFuseFault(target, pb.FuseOp_FUSE_SYMLINK)
 	fault.Delay()
 	errc = int(fault.MayReplaceErrorCode(int64(errc)))
 
@@ -203,7 +203,7 @@ func (f *SlowFS) Readlink(path string) (errc int, target string) {
 		target = string(buff[:n])
 	}
 
-	fault := f.Faults.GetFsFault(target, pb.FuseOp_FUSE_READLINK)
+	fault := f.Faults.GetFuseFault(target, pb.FuseOp_FUSE_READLINK)
 	fault.Delay()
 	errc = int(fault.MayReplaceErrorCode(int64(errc)))
 
@@ -219,7 +219,7 @@ func (f *SlowFS) Rename(oldpath string, newpath string) (errc int) {
 	newpath = filepath.Join(f.BaseDir, newpath)
 	errc = errno(syscall.Rename(oldpath, newpath))
 
-	fault := f.Faults.GetFsFault(oldpath, pb.FuseOp_FUSE_RENAME)
+	fault := f.Faults.GetFuseFault(oldpath, pb.FuseOp_FUSE_RENAME)
 	fault.Delay()
 	errc = int(fault.MayReplaceErrorCode(int64(errc)))
 
@@ -233,7 +233,7 @@ func (f *SlowFS) Chmod(path string, mode uint32) (errc int) {
 	path = filepath.Join(f.BaseDir, path)
 	errc = errno(syscall.Chmod(path, mode))
 
-	fault := f.Faults.GetFsFault(path, pb.FuseOp_FUSE_CHMOD)
+	fault := f.Faults.GetFuseFault(path, pb.FuseOp_FUSE_CHMOD)
 	fault.Delay()
 	errc = int(fault.MayReplaceErrorCode(int64(errc)))
 
@@ -248,7 +248,7 @@ func (f *SlowFS) Chown(path string, uid uint32, gid uint32) (errc int) {
 	path = filepath.Join(f.BaseDir, path)
 	errc = errno(syscall.Lchown(path, int(uid), int(gid)))
 
-	fault := f.Faults.GetFsFault(path, pb.FuseOp_FUSE_CHOWN)
+	fault := f.Faults.GetFuseFault(path, pb.FuseOp_FUSE_CHOWN)
 	fault.Delay()
 	errc = int(fault.MayReplaceErrorCode(int64(errc)))
 
@@ -267,7 +267,7 @@ func (f *SlowFS) Utimens(path string, tmsp1 []fuse.Timespec) (errc int) {
 	tmsp[1].Sec, tmsp[1].Nsec = tmsp1[1].Sec, tmsp1[1].Nsec
 	errc = errno(syscall.UtimesNano(path, tmsp[:]))
 
-	fault := f.Faults.GetFsFault(path, pb.FuseOp_FUSE_UTIMENS)
+	fault := f.Faults.GetFuseFault(path, pb.FuseOp_FUSE_UTIMENS)
 	fault.Delay()
 	errc = int(fault.MayReplaceErrorCode(int64(errc)))
 
@@ -281,7 +281,7 @@ func (f *SlowFS) Create(path string, flags int, mode uint32) (errc int, fh uint6
 	defer setUIDAndGID()()
 	errc, fh = f.open(path, flags, mode)
 
-	fault := f.Faults.GetFsFault(path, pb.FuseOp_FUSE_CREATE)
+	fault := f.Faults.GetFuseFault(path, pb.FuseOp_FUSE_CREATE)
 	fault.Delay()
 	errc = int(fault.MayReplaceErrorCode(int64(errc)))
 
@@ -297,7 +297,7 @@ func (f *SlowFS) Open(path string, flags int) (errc int, fh uint64) {
 	mode := uint32(0)
 	errc, fh = f.open(path, flags, mode)
 
-	fault := f.Faults.GetFsFault(path, pb.FuseOp_FUSE_OPEN)
+	fault := f.Faults.GetFuseFault(path, pb.FuseOp_FUSE_OPEN)
 	fault.Delay()
 	errc = int(fault.MayReplaceErrorCode(int64(errc)))
 
@@ -331,7 +331,7 @@ func (f *SlowFS) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc int) {
 	}
 	*stat = *newFuseStatFromGo(&stgo)
 
-	fault := f.Faults.GetFsFault(path, pb.FuseOp_FUSE_GETATTR)
+	fault := f.Faults.GetFuseFault(path, pb.FuseOp_FUSE_GETATTR)
 	fault.Delay()
 	errc = int(fault.MayReplaceErrorCode(int64(errc)))
 
@@ -352,7 +352,7 @@ func (f *SlowFS) Truncate(path string, size int64, fh uint64) (errc int) {
 		errc = errno(syscall.Ftruncate(int(fh), size))
 	}
 
-	fault := f.Faults.GetFsFault(path, pb.FuseOp_FUSE_TRUNCATE)
+	fault := f.Faults.GetFuseFault(path, pb.FuseOp_FUSE_TRUNCATE)
 	fault.Delay()
 	errc = int(fault.MayReplaceErrorCode(int64(errc)))
 
@@ -373,7 +373,7 @@ func (f *SlowFS) Read(path string, buff []byte, ofst int64, fh uint64) (rc int) 
 		rc = n
 	}
 
-	fault := f.Faults.GetFsFault(path, pb.FuseOp_FUSE_READ)
+	fault := f.Faults.GetFuseFault(path, pb.FuseOp_FUSE_READ)
 	fault.Delay()
 	rc = int(fault.MayReplaceErrorCode(int64(rc)))
 
@@ -395,7 +395,7 @@ func (f *SlowFS) Write(path string, buff []byte, ofst int64, fh uint64) (rc int)
 		rc = n
 	}
 
-	fault := f.Faults.GetFsFault(path, pb.FuseOp_FUSE_WRITE)
+	fault := f.Faults.GetFuseFault(path, pb.FuseOp_FUSE_WRITE)
 	fault.Delay()
 	rc = int(fault.MayReplaceErrorCode(int64(rc)))
 
@@ -409,7 +409,7 @@ func (f *SlowFS) Write(path string, buff []byte, ofst int64, fh uint64) (rc int)
 func (f *SlowFS) Release(path string, fh uint64) (errc int) {
 	errc = errno(syscall.Close(int(fh)))
 
-	fault := f.Faults.GetFsFault(path, pb.FuseOp_FUSE_RELEASE)
+	fault := f.Faults.GetFuseFault(path, pb.FuseOp_FUSE_RELEASE)
 	fault.Delay()
 	errc = int(fault.MayReplaceErrorCode(int64(errc)))
 
@@ -424,7 +424,7 @@ func (f *SlowFS) Fsync(path string, datasync bool, fh uint64) (errc int) {
 		errc = errno(syscall.Fsync(int(fh)))
 	}
 
-	fault := f.Faults.GetFsFault(path, pb.FuseOp_FUSE_FSYNC)
+	fault := f.Faults.GetFuseFault(path, pb.FuseOp_FUSE_FSYNC)
 	fault.Delay()
 	errc = int(fault.MayReplaceErrorCode(int64(errc)))
 
@@ -446,7 +446,7 @@ func (f *SlowFS) Opendir(path string) (errc int, fh uint64) {
 		fh = uint64(fd)
 	}
 
-	fault := f.Faults.GetFsFault(path, pb.FuseOp_FUSE_OPENDIR)
+	fault := f.Faults.GetFuseFault(path, pb.FuseOp_FUSE_OPENDIR)
 	fault.Delay()
 	errc = int(fault.MayReplaceErrorCode(int64(errc)))
 
@@ -457,7 +457,7 @@ func (f *SlowFS) Opendir(path string) (errc int, fh uint64) {
 type fillFn = func(name string, stat *fuse.Stat_t, ofst int64) bool
 
 func (f *SlowFS) Readdir(path string, fill fillFn, ofst int64, fh uint64) (errc int) {
-	fault := f.Faults.GetFsFault(path, pb.FuseOp_FUSE_READDIR)
+	fault := f.Faults.GetFuseFault(path, pb.FuseOp_FUSE_READDIR)
 	fault.Delay()
 
 	file, err := os.Open(filepath.Join(f.BaseDir, path))
@@ -492,7 +492,7 @@ func (f *SlowFS) Readdir(path string, fill fillFn, ofst int64, fh uint64) (errc 
 func (f *SlowFS) Releasedir(path string, fh uint64) (errc int) {
 	errc = errno(syscall.Close(int(fh)))
 
-	fault := f.Faults.GetFsFault(path, pb.FuseOp_FUSE_READDIR)
+	fault := f.Faults.GetFuseFault(path, pb.FuseOp_FUSE_READDIR)
 	fault.Delay()
 	errc = int(fault.MayReplaceErrorCode(int64(errc)))
 

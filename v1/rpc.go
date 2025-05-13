@@ -54,7 +54,7 @@ func (r *Rpc) InjectNbdFault(ctx context.Context, req *pb.InjectNbdFaultRequest)
 		fault.ReturnValue = &rc
 	}
 
-	id := r.Faults.BlkInject(fault)
+	id := r.Faults.NbdInject(fault)
 	return &pb.InjectNbdFaultResponse{Id: id}, nil
 }
 
@@ -78,7 +78,7 @@ func (r *Rpc) InjectFuseFault(_ context.Context, req *pb.InjectFuseFaultRequest)
 		fault.Delay = &d
 	}
 
-	id := r.Faults.FsInject(req.Fault.PathRe, fault)
+	id := r.Faults.FuseInject(fault)
 	return &pb.InjectFuseFaultResponse{Id: id}, nil
 }
 

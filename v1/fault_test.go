@@ -2,9 +2,9 @@ package slowio
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
-	"google.golang.org/protobuf/proto"
 
 	"github.com/fanyang89/slowio/pb"
 )
@@ -19,27 +19,32 @@ type FaultManagerTestSuite struct {
 
 func (s *FaultManagerTestSuite) TestFaultManager() {
 	f := NewFaultManager()
-	s.Len(f.ListFaults(), 0)
+	fuseFaults, nbdFaults := f.ListFaults()
+	s.Len(fuseFaults, 0)
+	s.Len(nbdFaults, 0)
 
-	request1 := &pb.InjectLatencyRequest{
-		PathRe:      "test_file.*",
-		Op:          pb.OpCode_READ,
-		LatencyMs:   100,
-		Possibility: 0.5,
-	}
-	id, err := f.InjectLatency(request1)
-	s.NoError(err)
+	d := 100 * time.Millisecond
+	id := f.FuseInject(&FuseFault{
+		PathRe:           "test_file.*",
+		Op:               pb.FuseOp_FUSE_READ,
+		Delay:            &d,
+		DelayPossibility: 0.5,
+	})
 	s.Equal(int32(0), id)
 
-	faults := f.ListFaults()
-	s.Len(faults, 1)
+	fuseFaults, _ = f.ListFaults()
+	s.Len(fuseFaults, 1)
 
-	req, ok := faults[0].GetFault().(*pb.FaultVariant_InjectLatencyRequest)
-	s.True(ok)
-	s.True(proto.Equal(request1, req.InjectLatencyRequest))
+	fault := fuseFaults[0]
+	s.NotNil(fault.Delay)
+	s.Equal("test_file.*", fault.PathRe)
+	s.Equal(pb.FuseOp_FUSE_READ, fault.Op)
+	s.Equal(d, *fault.Delay)
+	s.Equal(float32(0.5), fault.DelayPossibility)
 
 	deleted := f.DeleteAll()
 	s.Len(deleted, 1)
 
-	s.Len(f.ListFaults(), 0)
+	fuseFaults, _ = f.ListFaults()
+	s.Len(fuseFaults, 0)
 }

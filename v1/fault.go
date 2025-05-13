@@ -70,7 +70,7 @@ func (f *Fault) AppendTrace(e *zerolog.Event) *zerolog.Event {
 	return e
 }
 
-func (f *Fault) FromFs(s *FuseFault) {
+func (f *Fault) FromFuse(s *FuseFault) {
 	if s.Delay != nil && rand.Float32() <= s.DelayPossibility {
 		d := *s.Delay
 		f.DelayDuration = &d
@@ -82,7 +82,7 @@ func (f *Fault) FromFs(s *FuseFault) {
 	}
 }
 
-func (f *Fault) FromBlk(s *NbdFault) {
+func (f *Fault) FromNbd(s *NbdFault) {
 	if s.Delay != nil && rand.Float32() <= s.DelayPossibility {
 		d := *s.Delay
 		f.DelayDuration = &d
