@@ -3,7 +3,7 @@ package slowio
 import (
 	"os"
 
-	"github.com/fanyang89/slowfs/pb"
+	"github.com/fanyang89/slowio/pb"
 )
 
 type FileBackend struct {

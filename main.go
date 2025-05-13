@@ -7,7 +7,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	"github.com/fanyang89/slowfs/cmd"
+	"github.com/fanyang89/slowio/cmd"
 )
 
 func main() {

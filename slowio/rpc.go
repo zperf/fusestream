@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/fanyang89/slowfs/pb"
+	"github.com/fanyang89/slowio/pb"
 )
 
 type Rpc struct {

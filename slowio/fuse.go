@@ -12,7 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/winfsp/cgofuse/fuse"
 
-	"github.com/fanyang89/slowfs/pb"
+	"github.com/fanyang89/slowio/pb"
 )
 
 type SlowFS struct {

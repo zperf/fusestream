@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/fanyang89/slowfs/pb"
+	"github.com/fanyang89/slowio/pb"
 )
 
 func getKeys[K comparable, V any](m map[K]V) []K {

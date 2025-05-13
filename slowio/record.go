@@ -3,7 +3,7 @@ package slowio
 import (
 	"github.com/winfsp/cgofuse/fuse"
 
-	"github.com/fanyang89/slowfs/pb"
+	"github.com/fanyang89/slowio/pb"
 )
 
 type Record struct {

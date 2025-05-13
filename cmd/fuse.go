@@ -13,8 +13,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/fanyang89/slowfs/pb"
-	"github.com/fanyang89/slowfs/slowio"
+	"github.com/fanyang89/slowio/pb"
+	"github.com/fanyang89/slowio/slowio"
 )
 
 var fuseCommand = &cli.Command{

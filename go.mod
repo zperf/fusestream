@@ -1,10 +1,10 @@
-module github.com/fanyang89/slowfs
+module github.com/fanyang89/slowio
 
 go 1.24.3
 
 require (
+	github.com/d5/tengo/v2 v2.17.0
 	github.com/fatih/color v1.18.0
-	github.com/negrel/assert v0.5.0
 	github.com/pojntfx/go-nbd v0.3.2
 	github.com/rodaine/table v1.3.0
 	github.com/rs/zerolog v1.34.0
@@ -16,7 +16,6 @@ require (
 )
 
 require (
-	github.com/d5/tengo/v2 v2.17.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
