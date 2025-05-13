@@ -1,4 +1,4 @@
-package slowfs
+package slowio
 
 import (
 	"math/rand"
@@ -70,7 +70,7 @@ func (f *Fault) AppendTrace(e *zerolog.Event) *zerolog.Event {
 	return e
 }
 
-func (f *Fault) FromFs(s *FsFault) {
+func (f *Fault) FromFs(s *FuseFault) {
 	if s.Delay != nil && rand.Float32() <= s.DelayPossibility {
 		d := *s.Delay
 		f.DelayDuration = &d
@@ -82,7 +82,7 @@ func (f *Fault) FromFs(s *FsFault) {
 	}
 }
 
-func (f *Fault) FromBlk(s *BlkFault) {
+func (f *Fault) FromBlk(s *NbdFault) {
 	if s.Delay != nil && rand.Float32() <= s.DelayPossibility {
 		d := *s.Delay
 		f.DelayDuration = &d

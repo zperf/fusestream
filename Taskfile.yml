@@ -11,19 +11,19 @@ tasks:
 
   build:
     cmds:
-      - go build {{.GO_BUILD_FLAGS}} -o bin/slowfs main.go
+      - go build {{.GO_BUILD_FLAGS}} -o bin/slowio main.go
     sources:
       - ./**/*.go
     generates:
-      - ./bin/slowfs
+      - ./bin/slowio
 
   build-linux:
     cmds:
-      - GOARCH=amd64 GOOS=linux go build {{.GO_BUILD_FLAGS}} -o bin/linux-amd64/slowfs main.go
+      - GOARCH=amd64 GOOS=linux go build {{.GO_BUILD_FLAGS}} -o bin/linux-amd64/slowio main.go
 
   build-darwin:
     cmds:
-      - GOARCH=arm64 GOOS=darwin go build {{.GO_BUILD_FLAGS}} -o bin/darwin-arm64/slowfs main.go
+      - GOARCH=arm64 GOOS=darwin go build {{.GO_BUILD_FLAGS}} -o bin/darwin-arm64/slowio main.go
 
   clean:
     cmds:
@@ -46,12 +46,12 @@ tasks:
     cmds:
       - >
         protoc
-        -I=slowfs
+        -I=slowio
         --go-grpc_out=paths=source_relative:pb
         --go_out=paths=source_relative:pb
-        slowfs.proto
+        slowio.proto
 
   install:
     cmds:
       - task: build
-      - install -D ./bin/slowfs /usr/local/bin/slowfs
+      - install -D ./bin/slowio /usr/local/bin/slowio

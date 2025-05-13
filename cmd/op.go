@@ -40,16 +40,16 @@ func (e *OpCliEnum[T]) Set(value string) error {
 	return nil
 }
 
-func NewFsOpCliEnum() flag.Getter {
-	return &OpCliEnum[pb.FsOp]{
-		m:    pb.FsOp_value,
-		cast: func(a int32) pb.FsOp { return pb.FsOp(a) },
+func NewFuseOpCliEnum() flag.Getter {
+	return &OpCliEnum[pb.FuseOp]{
+		m:    pb.FuseOp_value,
+		cast: func(a int32) pb.FuseOp { return pb.FuseOp(a) },
 	}
 }
 
-func NewBlkOpCliEnum() flag.Getter {
-	return &OpCliEnum[pb.BlkOp]{
-		m:    pb.BlkOp_value,
-		cast: func(a int32) pb.BlkOp { return pb.BlkOp(a) },
+func NewNbdOpCliEnum() flag.Getter {
+	return &OpCliEnum[pb.NbdOp]{
+		m:    pb.NbdOp_value,
+		cast: func(a int32) pb.NbdOp { return pb.NbdOp(a) },
 	}
 }

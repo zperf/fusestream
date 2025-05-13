@@ -1,6 +1,4 @@
-//go:build linux
-
-package slowfs
+package slowio
 
 import (
 	"syscall"

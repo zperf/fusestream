@@ -1,4 +1,4 @@
-package slowfs
+package slowio
 
 import (
 	"context"
@@ -23,7 +23,7 @@ type RpcTestSuite struct {
 func (s *RpcTestSuite) TestItWorks() {
 	faults := NewFaultManager()
 	server := grpc.NewServer(grpc.Creds(insecure.NewCredentials()))
-	pb.RegisterSlowFsServer(server, &Rpc{Faults: faults})
+	pb.RegisterSlowIOServer(server, &Rpc{Faults: faults})
 
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	s.Require().NoError(err)
@@ -35,7 +35,7 @@ func (s *RpcTestSuite) TestItWorks() {
 
 	conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	s.Require().NoError(err)
-	client := pb.NewSlowFsClient(conn)
+	client := pb.NewSlowIOClient(conn)
 
 	_, err = client.ListFaults(context.TODO(), &pb.Void{})
 	s.NoError(err)

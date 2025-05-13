@@ -5,8 +5,8 @@ import (
 )
 
 var RootCommand = &cli.Command{
-	Name:  "slowfs",
-	Usage: "A simple FUSE tool for file system fault injection tests",
+	Name:  "slowio",
+	Usage: "A simple FUSE/NBD tool for file system and block device fault injection tests",
 	Commands: []*cli.Command{
 		fuseCommand,
 		nbdCommand,

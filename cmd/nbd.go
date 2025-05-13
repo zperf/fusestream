@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"os"
 	"os/signal"
@@ -16,19 +17,24 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/fanyang89/slowfs/pb"
-	"github.com/fanyang89/slowfs/slowfs"
+	"github.com/fanyang89/slowfs/slowio"
 )
 
 var nbdCommand = &cli.Command{
-	Name: "nbd",
+	Name:  "nbd",
+	Usage: "NBD commands",
 	Commands: []*cli.Command{
 		nbdServeCommand,
 		nbdConnectCommand,
+		injectNbdDelayCommand,
+		injectNbdReturnValueCommand,
+		injectNbdErrorCommand,
 	},
 }
 
 var nbdServeCommand = &cli.Command{
-	Name: "serve",
+	Name:  "serve",
+	Usage: "Start the NBD server",
 	Flags: []cli.Flag{
 		flagNetwork,
 		&cli.StringFlag{
@@ -89,10 +95,10 @@ var nbdServeCommand = &cli.Command{
 		}
 		defer func() { _ = fh.Close() }()
 
-		faults := slowfs.NewFaultManager()
+		faults := slowio.NewFaultManager()
 		rpcServer := grpc.NewServer(grpc.Creds(insecure.NewCredentials()))
-		pb.RegisterSlowFsServer(rpcServer, &slowfs.Rpc{Faults: faults})
-		fileBackend := slowfs.NewFileBackend(fh, faults)
+		pb.RegisterSlowIOServer(rpcServer, &slowio.Rpc{Faults: faults})
+		fileBackend := slowio.NewFileBackend(fh, faults)
 
 		options := &server.Options{
 			ReadOnly:           readOnly,
@@ -155,7 +161,8 @@ var nbdServeCommand = &cli.Command{
 }
 
 var nbdConnectCommand = &cli.Command{
-	Name: "connect",
+	Name:  "connect",
+	Usage: "Connect to an NBD server",
 	Flags: []cli.Flag{
 		flagAddress,
 		flagNetwork,
@@ -188,5 +195,146 @@ var nbdConnectCommand = &cli.Command{
 			ExportName: command.String("export"),
 			BlockSize:  command.Uint32("block-size"),
 		})
+	},
+}
+
+var injectNbdDelayCommand = &cli.Command{
+	Name:  "inject-delay",
+	Usage: "Inject delay for NBD",
+	Flags: []cli.Flag{
+		flagAddress,
+		flagPossibility,
+		flagNbdOp,
+		flagPreCond,
+		flagDelay,
+	},
+	Action: func(ctx context.Context, command *cli.Command) error {
+		address := command.String("address")
+		conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			return err
+		}
+		defer func() { _ = conn.Close() }()
+		client := pb.NewSlowIOClient(conn)
+
+		fault := &pb.NbdFault{
+			Op: command.Value("op").(pb.NbdOp),
+			Delay: &pb.NbdFault_DelayFault{
+				DelayFault: &pb.DelayFault{
+					Possibility: command.Float32("possibility"),
+					DelayMs:     command.Duration("delay").Milliseconds(),
+				},
+			},
+		}
+
+		preCond := command.String("pre-cond")
+		if preCond != "" {
+			fault.PreCond = &pb.NbdFault_Expression{
+				Expression: preCond,
+			}
+		}
+
+		rsp, err := client.InjectNbdFault(ctx, &pb.InjectNbdFaultRequest{Fault: fault})
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("Fault injected, id: %d\n", rsp.GetId())
+		return nil
+	},
+}
+
+var injectNbdErrorCommand = &cli.Command{
+	Name:  "inject-error",
+	Usage: "Inject error for block device",
+	Flags: []cli.Flag{
+		flagAddress,
+		flagPossibility,
+		flagNbdOp,
+		flagPreCond,
+		&cli.StringFlag{
+			Name:     "error",
+			Required: true,
+		},
+	},
+	Action: func(ctx context.Context, command *cli.Command) error {
+		address := command.String("address")
+		conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			return err
+		}
+		defer func() { _ = conn.Close() }()
+		client := pb.NewSlowIOClient(conn)
+
+		fault := &pb.NbdFault{
+			Op: command.Value("op").(pb.NbdOp),
+			Err: &pb.NbdFault_ErrorFault{
+				ErrorFault: &pb.ErrorFault{
+					Possibility: command.Float32("possibility"),
+					Err:         command.String("error"),
+				},
+			},
+		}
+
+		preCond := command.String("pre-cond")
+		if preCond != "" {
+			fault.PreCond = &pb.NbdFault_Expression{
+				Expression: preCond,
+			}
+		}
+
+		rsp, err := client.InjectNbdFault(ctx, &pb.InjectNbdFaultRequest{Fault: fault})
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("Fault injected, id: %d\n", rsp.GetId())
+		return nil
+	},
+}
+
+var injectNbdReturnValueCommand = &cli.Command{
+	Name:  "inject-return-value",
+	Usage: "Inject return value for block device",
+	Flags: []cli.Flag{
+		flagAddress,
+		flagPossibility,
+		flagReturnValue,
+		flagNbdOp,
+		flagPreCond,
+	},
+	Action: func(ctx context.Context, command *cli.Command) error {
+		address := command.String("address")
+		conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			return err
+		}
+		defer func() { _ = conn.Close() }()
+		client := pb.NewSlowIOClient(conn)
+
+		fault := &pb.NbdFault{
+			Op: command.Value("op").(pb.NbdOp),
+			ReturnValue: &pb.NbdFault_ReturnValueFault{
+				ReturnValueFault: &pb.ReturnValueFault{
+					Possibility: command.Float32("possibility"),
+					ReturnValue: command.Int64("return-value"),
+				},
+			},
+		}
+
+		preCond := command.String("pre-cond")
+		if preCond != "" {
+			fault.PreCond = &pb.NbdFault_Expression{
+				Expression: preCond,
+			}
+		}
+
+		rsp, err := client.InjectNbdFault(ctx, &pb.InjectNbdFaultRequest{Fault: fault})
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("Fault injected, id: %d\n", rsp.GetId())
+		return nil
 	},
 }

@@ -1,4 +1,4 @@
-package slowfs
+package slowio
 
 import (
 	"github.com/winfsp/cgofuse/fuse"
@@ -13,7 +13,7 @@ type Record struct {
 	Fh        uint64 `json:"fh,omitzero"`
 }
 
-func NewRecord(path string, ec int, op pb.FsOp) *Record {
+func NewRecord(path string, ec int, op pb.FuseOp) *Record {
 	return &Record{
 		Path:      path,
 		ErrorCode: ec,

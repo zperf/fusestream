@@ -37,17 +37,17 @@ var flagPossibility = &cli.Float32Flag{
 	Required: true,
 }
 
-var flagFsOp = &cli.GenericFlag{
+var flagFuseOp = &cli.GenericFlag{
 	Name:     "op",
 	Usage:    "The operation type",
-	Value:    NewFsOpCliEnum(),
+	Value:    NewFuseOpCliEnum(),
 	Required: true,
 }
 
-var flagBlkOp = &cli.GenericFlag{
+var flagNbdOp = &cli.GenericFlag{
 	Name:     "op",
 	Usage:    "The operation type",
-	Value:    NewBlkOpCliEnum(),
+	Value:    NewNbdOpCliEnum(),
 	Required: true,
 }
 

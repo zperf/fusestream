@@ -7,14 +7,14 @@ inspired by [chaos-mesh/toda](https://github.com/chaos-mesh/toda).
 
 ```bash
 # mount the file system
-slowfs mount --base-dir /tmp/slowfs --mountpoint /mnt/slowfs --listen 127.0.0.1:1234
+slowio mount --base-dir /tmp/slowio --mountpoint /mnt/slowio --listen 127.0.0.1:1234
 
 # inject faults
-slowfs fault inject-latency --address 127.0.0.1:1234 --op READ --path-regex 'test-file.*' --possibility 0.5 --latency 100ms 
-slowfs fault inject-error --address 127.0.0.1:1234 --op READ --path-regex 'test-file.*' --possibility 0.5 --error-code -1 
+slowio fault inject-latency --address 127.0.0.1:1234 --op READ --path-regex 'test-file.*' --possibility 0.5 --latency 100ms 
+slowio fault inject-error --address 127.0.0.1:1234 --op READ --path-regex 'test-file.*' --possibility 0.5 --error-code -1 
 
 # list injected faults
-slowfs fault list
+slowio fault list
 ```
 
 ## Example
@@ -22,20 +22,20 @@ slowfs fault list
 Mount:
 
 ```bash
-slowfs mount -v -b /tmp/slowfs -m /mnt/slowfs
+slowio mount -v -b /tmp/slowio -m /mnt/slowio
 ```
 
 Inject latency for creating file:
 
 ```bash
-slowfs fault inject-latency -g 'test-file.*' -p 1 --op CREATE -l 1000ms
+slowio fault inject-latency -g 'test-file.*' -p 1 --op CREATE -l 1000ms
 ```
 
 Create file:
 
 ```bash
-# time touch /mnt/slowfs/test-file14
-touch /mnt/slowfs/test-file14  0.00s user 0.00s system 0% cpu 1.002 total
+# time touch /mnt/slowio/test-file14
+touch /mnt/slowio/test-file14  0.00s user 0.00s system 0% cpu 1.002 total
 ```
 
 ## OpCodes

@@ -1,4 +1,4 @@
-package slowfs
+package slowio
 
 import (
 	"encoding/json"

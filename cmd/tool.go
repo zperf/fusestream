@@ -10,10 +10,11 @@ import (
 )
 
 var toolCommand = &cli.Command{
-	Name: "tool",
+	Name:  "tool",
+	Usage: "Utilities",
 	Commands: []*cli.Command{
 		regexCommand,
-		blkPreCondTestCommand,
+		evalNbdPreCond,
 	},
 }
 
@@ -49,8 +50,9 @@ var regexCommand = &cli.Command{
 	},
 }
 
-var blkPreCondTestCommand = &cli.Command{
-	Name: "test-blk-pre-cond",
+var evalNbdPreCond = &cli.Command{
+	Name:  "eval-nbd-pre-cond",
+	Usage: "Eval an pre-condition expression",
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:     "expression",
