@@ -1,44 +1,33 @@
-# SlowFS
+# SlowIO
 
-A simple FUSE tool for file system fault injection tests,
+A simple tool for file system and block device fault injection tests,
 inspired by [chaos-mesh/toda](https://github.com/chaos-mesh/toda).
 
 ## Usage
 
+### FUSE
+
 ```bash
 # mount the file system
-slowio mount --base-dir /tmp/slowio --mountpoint /mnt/slowio --listen 127.0.0.1:1234
+slowio mount -b --base-dir /tmp/slowio --mountpoint /mnt/slowio
 
-# inject faults
-slowio fault inject-latency --address 127.0.0.1:1234 --op READ --path-regex 'test-file.*' --possibility 0.5 --latency 100ms 
-slowio fault inject-error --address 127.0.0.1:1234 --op READ --path-regex 'test-file.*' --possibility 0.5 --error-code -1 
+# inject fault
+slowio fault inject-latency -g 'test-file.*' -p 1 --op CREATE -l 1000ms
 
 # list injected faults
 slowio fault list
-```
 
-## Example
-
-Mount:
-
-```bash
-slowio mount -v -b /tmp/slowio -m /mnt/slowio
-```
-
-Inject latency for creating file:
-
-```bash
-slowio fault inject-latency -g 'test-file.*' -p 1 --op CREATE -l 1000ms
-```
-
-Create file:
-
-```bash
 # time touch /mnt/slowio/test-file14
-touch /mnt/slowio/test-file14  0.00s user 0.00s system 0% cpu 1.002 total
+0.00s user 0.00s system 0% cpu 1.002 total
 ```
+
+### NBD
+
+TBD
 
 ## OpCodes
+
+### FUSE
 
 - UNKNOWN
 - STATFS
@@ -64,6 +53,13 @@ touch /mnt/slowio/test-file14  0.00s user 0.00s system 0% cpu 1.002 total
 - OPENDIR
 - READDIR
 - RELEASEDIR
+
+### NBD
+
+- READAT
+- WRITEAT
+- SIZE
+- SYNC
 
 ## Licence
 
