@@ -85,8 +85,8 @@ func (f *SlowFS) maybeRecord(v any) {
 func (f *SlowFS) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
 	path = filepath.Join(f.BaseDir, path)
 	stgo := syscall.Statfs_t{}
-	errc = errno(syscallStatfs(path, &stgo))
-	copyFuseStatfsFromGoStatfs(stat, &stgo)
+	errc = errno(syscall.Statfs(path, &stgo))
+	*stat = *newFuseStatfsFromGo(&stgo)
 
 	fault := f.Faults.GetFsFault(path, pb.FuseOp_FUSE_STATFS)
 	fault.Delay()
@@ -102,7 +102,7 @@ func (f *SlowFS) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
 }
 
 func (f *SlowFS) Mknod(path string, mode uint32, dev uint64) (errc int) {
-	defer setuidgid()()
+	defer setUIDAndGID()()
 	path = filepath.Join(f.BaseDir, path)
 	errc = errno(syscall.Mknod(path, mode, int(dev)))
 
@@ -122,7 +122,7 @@ func (f *SlowFS) Mknod(path string, mode uint32, dev uint64) (errc int) {
 }
 
 func (f *SlowFS) Mkdir(path string, mode uint32) (errc int) {
-	defer setuidgid()()
+	defer setUIDAndGID()()
 	path = filepath.Join(f.BaseDir, path)
 	errc = errno(syscall.Mkdir(path, mode))
 
@@ -161,7 +161,7 @@ func (f *SlowFS) Rmdir(path string) (errc int) {
 }
 
 func (f *SlowFS) Link(oldpath string, newpath string) (errc int) {
-	defer setuidgid()()
+	defer setUIDAndGID()()
 	oldpath = filepath.Join(f.BaseDir, oldpath)
 	newpath = filepath.Join(f.BaseDir, newpath)
 	errc = errno(syscall.Link(oldpath, newpath))
@@ -177,7 +177,7 @@ func (f *SlowFS) Link(oldpath string, newpath string) (errc int) {
 }
 
 func (f *SlowFS) Symlink(target string, newpath string) (errc int) {
-	defer setuidgid()()
+	defer setUIDAndGID()()
 	newpath = filepath.Join(f.BaseDir, newpath)
 	errc = errno(syscall.Symlink(target, newpath))
 
@@ -214,7 +214,7 @@ func (f *SlowFS) Readlink(path string) (errc int, target string) {
 }
 
 func (f *SlowFS) Rename(oldpath string, newpath string) (errc int) {
-	defer setuidgid()()
+	defer setUIDAndGID()()
 	oldpath = filepath.Join(f.BaseDir, oldpath)
 	newpath = filepath.Join(f.BaseDir, newpath)
 	errc = errno(syscall.Rename(oldpath, newpath))
@@ -278,7 +278,7 @@ func (f *SlowFS) Utimens(path string, tmsp1 []fuse.Timespec) (errc int) {
 }
 
 func (f *SlowFS) Create(path string, flags int, mode uint32) (errc int, fh uint64) {
-	defer setuidgid()()
+	defer setUIDAndGID()()
 	errc, fh = f.open(path, flags, mode)
 
 	fault := f.Faults.GetFsFault(path, pb.FuseOp_FUSE_CREATE)
@@ -323,13 +323,13 @@ func (f *SlowFS) open(path string, flags int, mode uint32) (errc int, fh uint64)
 
 func (f *SlowFS) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc int) {
 	stgo := syscall.Stat_t{}
-	if ^uint64(0) == fh {
+	if fh == ^uint64(0) {
 		path = filepath.Join(f.BaseDir, path)
 		errc = errno(syscall.Lstat(path, &stgo))
 	} else {
 		errc = errno(syscall.Fstat(int(fh), &stgo))
 	}
-	copyFusestatFromGostat(stat, &stgo)
+	*stat = *newFuseStatFromGo(&stgo)
 
 	fault := f.Faults.GetFsFault(path, pb.FuseOp_FUSE_GETATTR)
 	fault.Delay()
@@ -418,7 +418,11 @@ func (f *SlowFS) Release(path string, fh uint64) (errc int) {
 }
 
 func (f *SlowFS) Fsync(path string, datasync bool, fh uint64) (errc int) {
-	errc = errno(fsync(datasync, int(fh)))
+	if datasync {
+		errc = errno(syscall.Fdatasync(int(fh)))
+	} else {
+		errc = errno(syscall.Fsync(int(fh)))
+	}
 
 	fault := f.Faults.GetFsFault(path, pb.FuseOp_FUSE_FSYNC)
 	fault.Delay()

@@ -6,7 +6,7 @@ import (
 	"github.com/winfsp/cgofuse/fuse"
 )
 
-func setuidgid() func() {
+func setUIDAndGID() func() {
 	euid := syscall.Geteuid()
 	if euid == 0 {
 		uid, gid, _ := fuse.Getcontext()
@@ -21,8 +21,8 @@ func setuidgid() func() {
 	return func() {}
 }
 
-func copyFuseStatfsFromGoStatfs(dst *fuse.Statfs_t, src *syscall.Statfs_t) {
-	*dst = fuse.Statfs_t{}
+func newFuseStatfsFromGo(src *syscall.Statfs_t) *fuse.Statfs_t {
+	dst := &fuse.Statfs_t{}
 	dst.Bsize = uint64(src.Bsize)
 	dst.Frsize = 1
 	dst.Blocks = src.Blocks
@@ -32,10 +32,11 @@ func copyFuseStatfsFromGoStatfs(dst *fuse.Statfs_t, src *syscall.Statfs_t) {
 	dst.Ffree = src.Ffree
 	dst.Favail = src.Ffree
 	dst.Namemax = uint64(src.Namelen)
+	return dst
 }
 
-func copyFusestatFromGostat(dst *fuse.Stat_t, src *syscall.Stat_t) {
-	*dst = fuse.Stat_t{}
+func newFuseStatFromGo(src *syscall.Stat_t) *fuse.Stat_t {
+	dst := &fuse.Stat_t{}
 	dst.Dev = src.Dev
 	dst.Ino = src.Ino
 	dst.Mode = src.Mode
@@ -47,17 +48,8 @@ func copyFusestatFromGostat(dst *fuse.Stat_t, src *syscall.Stat_t) {
 	dst.Atim.Sec, dst.Atim.Nsec = src.Atim.Sec, src.Atim.Nsec
 	dst.Mtim.Sec, dst.Mtim.Nsec = src.Mtim.Sec, src.Mtim.Nsec
 	dst.Ctim.Sec, dst.Ctim.Nsec = src.Ctim.Sec, src.Ctim.Nsec
+	//goland:noinspection GoRedundantConversion
 	dst.Blksize = int64(src.Blksize)
 	dst.Blocks = src.Blocks
-}
-
-func syscallStatfs(path string, stat *syscall.Statfs_t) error {
-	return syscall.Statfs(path, stat)
-}
-
-func fsync(datasync bool, fh int) error {
-	if datasync {
-		return syscall.Fdatasync(fh)
-	}
-	return syscall.Fsync(fh)
+	return dst
 }
