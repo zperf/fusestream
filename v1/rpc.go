@@ -101,14 +101,14 @@ func (r *Rpc) ListFaults(_ context.Context, _ *pb.Void) (*pb.ListFaultsResponse,
 	NbdFaults := make([]*pb.NbdFault, 0)
 
 	for _, fault := range f {
-		FuseFault := &pb.FuseFault{
+		fuseFault := &pb.FuseFault{
 			Id:     fault.ID,
 			PathRe: fault.PathRe,
 			Op:     fault.Op,
 		}
 
 		if fault.Delay != nil {
-			FuseFault.Delay = &pb.FuseFault_DelayFault{
+			fuseFault.Delay = &pb.FuseFault_DelayFault{
 				DelayFault: &pb.DelayFault{
 					Possibility: fault.DelayPossibility,
 					DelayMs:     fault.Delay.Milliseconds(),
@@ -117,7 +117,7 @@ func (r *Rpc) ListFaults(_ context.Context, _ *pb.Void) (*pb.ListFaultsResponse,
 		}
 
 		if fault.ReturnValue != nil {
-			FuseFault.ReturnValue = &pb.FuseFault_ReturnValueFault{
+			fuseFault.ReturnValue = &pb.FuseFault_ReturnValueFault{
 				ReturnValueFault: &pb.ReturnValueFault{
 					Possibility: fault.ReturnValuePossibility,
 					ReturnValue: int64(*fault.ReturnValue),
@@ -125,17 +125,17 @@ func (r *Rpc) ListFaults(_ context.Context, _ *pb.Void) (*pb.ListFaultsResponse,
 			}
 		}
 
-		FuseFaults = append(FuseFaults, FuseFault)
+		FuseFaults = append(FuseFaults, fuseFault)
 	}
 
 	for _, fault := range b {
-		NbdFault := &pb.NbdFault{
+		nbdFault := &pb.NbdFault{
 			Id: fault.ID,
 			Op: fault.Op,
 		}
 
 		if fault.Delay != nil {
-			NbdFault.Delay = &pb.NbdFault_DelayFault{
+			nbdFault.Delay = &pb.NbdFault_DelayFault{
 				DelayFault: &pb.DelayFault{
 					Possibility: fault.DelayPossibility,
 					DelayMs:     fault.Delay.Milliseconds(),
@@ -144,7 +144,7 @@ func (r *Rpc) ListFaults(_ context.Context, _ *pb.Void) (*pb.ListFaultsResponse,
 		}
 
 		if fault.ReturnValue != nil {
-			NbdFault.ReturnValue = &pb.NbdFault_ReturnValueFault{
+			nbdFault.ReturnValue = &pb.NbdFault_ReturnValueFault{
 				ReturnValueFault: &pb.ReturnValueFault{
 					Possibility: fault.ReturnValuePossibility,
 					ReturnValue: *fault.ReturnValue,
@@ -153,7 +153,7 @@ func (r *Rpc) ListFaults(_ context.Context, _ *pb.Void) (*pb.ListFaultsResponse,
 		}
 
 		if fault.Err != nil {
-			NbdFault.Err = &pb.NbdFault_ErrorFault{
+			nbdFault.Err = &pb.NbdFault_ErrorFault{
 				ErrorFault: &pb.ErrorFault{
 					Possibility: fault.ErrPossibility,
 					Err:         (*fault.Err).Error(),
@@ -161,7 +161,7 @@ func (r *Rpc) ListFaults(_ context.Context, _ *pb.Void) (*pb.ListFaultsResponse,
 			}
 		}
 
-		NbdFaults = append(NbdFaults, NbdFault)
+		NbdFaults = append(NbdFaults, nbdFault)
 	}
 
 	return &pb.ListFaultsResponse{FuseFaults: FuseFaults, NbdFaults: NbdFaults}, nil

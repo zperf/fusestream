@@ -55,10 +55,6 @@ var fuseMountCommand = &cli.Command{
 			Usage: "Use own inode values [FUSE3 only]",
 			Value: true,
 		},
-		&cli.StringFlag{
-			Name:  "record",
-			Usage: "Filesystem operations record path",
-		},
 		&cli.StringSliceFlag{
 			Name:  "mount-options",
 			Usage: "FUSE mount options",
@@ -74,10 +70,7 @@ var fuseMountCommand = &cli.Command{
 		faults := slowio.NewFaultManager()
 		server := grpc.NewServer(grpc.Creds(insecure.NewCredentials()))
 		pb.RegisterSlowIOServer(server, &slowio.Rpc{Faults: faults})
-		fs := slowio.New(
-			command.String("base-dir"), faults,
-			command.String("record"), verbose,
-		)
+		fs := slowio.New(command.String("base-dir"), faults)
 
 		// start RPC server
 		listener, err := net.Listen("tcp", command.String("listen"))
