@@ -11,29 +11,22 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/winfsp/cgofuse/fuse"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 
 	"github.com/fanyang89/slowio/pb"
 )
-
-const tracerName = "github.com/fanyang89/slowio"
 
 type SlowFS struct {
 	fuse.FileSystemBase
 
 	BaseDir string
 	Faults  *FaultManager
-	tracer  trace.Tracer
 }
 
 func New(baseDir string, faults *FaultManager) *SlowFS {
-	tracer := otel.GetTracerProvider().Tracer(tracerName)
 	return &SlowFS{
 		BaseDir: baseDir,
 		Faults:  faults,
-		tracer:  tracer,
 	}
 }
 
@@ -46,7 +39,7 @@ func (f *SlowFS) Init() {
 }
 
 func (f *SlowFS) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
-	_, span := f.tracer.Start(context.TODO(), "Statfs")
+	_, span := tracer.Start(context.TODO(), "fuse.Statfs")
 	defer span.End()
 
 	path = filepath.Join(f.BaseDir, path)
@@ -66,7 +59,7 @@ func (f *SlowFS) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
 }
 
 func (f *SlowFS) Mknod(path string, mode uint32, dev uint64) (errc int) {
-	_, span := f.tracer.Start(context.TODO(), "Mknod")
+	_, span := tracer.Start(context.TODO(), "fuse.Mknod")
 	defer span.End()
 
 	defer setUIDAndGID()()
@@ -87,7 +80,7 @@ func (f *SlowFS) Mknod(path string, mode uint32, dev uint64) (errc int) {
 }
 
 func (f *SlowFS) Mkdir(path string, mode uint32) (errc int) {
-	_, span := f.tracer.Start(context.TODO(), "Mkdir")
+	_, span := tracer.Start(context.TODO(), "fuse.Mkdir")
 	defer span.End()
 
 	defer setUIDAndGID()()
@@ -107,7 +100,7 @@ func (f *SlowFS) Mkdir(path string, mode uint32) (errc int) {
 }
 
 func (f *SlowFS) Unlink(path string) (errc int) {
-	_, span := f.tracer.Start(context.TODO(), "Unlink")
+	_, span := tracer.Start(context.TODO(), "fuse.Unlink")
 	defer span.End()
 
 	path = filepath.Join(f.BaseDir, path)
@@ -125,7 +118,7 @@ func (f *SlowFS) Unlink(path string) (errc int) {
 }
 
 func (f *SlowFS) Rmdir(path string) (errc int) {
-	_, span := f.tracer.Start(context.TODO(), "Rmdir")
+	_, span := tracer.Start(context.TODO(), "fuse.Rmdir")
 	defer span.End()
 
 	path = filepath.Join(f.BaseDir, path)
@@ -143,7 +136,7 @@ func (f *SlowFS) Rmdir(path string) (errc int) {
 }
 
 func (f *SlowFS) Link(oldpath string, newpath string) (errc int) {
-	_, span := f.tracer.Start(context.TODO(), "Link")
+	_, span := tracer.Start(context.TODO(), "fuse.Link")
 	defer span.End()
 
 	defer setUIDAndGID()()
@@ -164,7 +157,7 @@ func (f *SlowFS) Link(oldpath string, newpath string) (errc int) {
 }
 
 func (f *SlowFS) Symlink(target string, newpath string) (errc int) {
-	_, span := f.tracer.Start(context.TODO(), "Symlink")
+	_, span := tracer.Start(context.TODO(), "fuse.Symlink")
 	defer span.End()
 
 	defer setUIDAndGID()()
@@ -184,7 +177,7 @@ func (f *SlowFS) Symlink(target string, newpath string) (errc int) {
 }
 
 func (f *SlowFS) Readlink(path string) (errc int, target string) {
-	_, span := f.tracer.Start(context.TODO(), "Readlink")
+	_, span := tracer.Start(context.TODO(), "fuse.Readlink")
 	defer span.End()
 
 	path = filepath.Join(f.BaseDir, path)
@@ -211,7 +204,7 @@ func (f *SlowFS) Readlink(path string) (errc int, target string) {
 }
 
 func (f *SlowFS) Rename(oldpath string, newpath string) (errc int) {
-	_, span := f.tracer.Start(context.TODO(), "Rename")
+	_, span := tracer.Start(context.TODO(), "fuse.Rename")
 	defer span.End()
 
 	defer setUIDAndGID()()
@@ -232,7 +225,7 @@ func (f *SlowFS) Rename(oldpath string, newpath string) (errc int) {
 }
 
 func (f *SlowFS) Chmod(path string, mode uint32) (errc int) {
-	_, span := f.tracer.Start(context.TODO(), "Chmod")
+	_, span := tracer.Start(context.TODO(), "fuse.Chmod")
 	defer span.End()
 
 	path = filepath.Join(f.BaseDir, path)
@@ -251,7 +244,7 @@ func (f *SlowFS) Chmod(path string, mode uint32) (errc int) {
 }
 
 func (f *SlowFS) Chown(path string, uid uint32, gid uint32) (errc int) {
-	_, span := f.tracer.Start(context.TODO(), "Chown")
+	_, span := tracer.Start(context.TODO(), "fuse.Chown")
 	defer span.End()
 
 	path = filepath.Join(f.BaseDir, path)
@@ -271,7 +264,7 @@ func (f *SlowFS) Chown(path string, uid uint32, gid uint32) (errc int) {
 }
 
 func (f *SlowFS) Utimens(path string, tmsp1 []fuse.Timespec) (errc int) {
-	_, span := f.tracer.Start(context.TODO(), "Utimens")
+	_, span := tracer.Start(context.TODO(), "fuse.Utimens")
 	defer span.End()
 
 	path = filepath.Join(f.BaseDir, path)
@@ -296,7 +289,7 @@ func (f *SlowFS) Utimens(path string, tmsp1 []fuse.Timespec) (errc int) {
 }
 
 func (f *SlowFS) Create(path string, flags int, mode uint32) (errc int, fh uint64) {
-	_, span := f.tracer.Start(context.TODO(), "Create")
+	_, span := tracer.Start(context.TODO(), "fuse.Create")
 	defer span.End()
 
 	defer setUIDAndGID()()
@@ -317,7 +310,7 @@ func (f *SlowFS) Create(path string, flags int, mode uint32) (errc int, fh uint6
 }
 
 func (f *SlowFS) Open(path string, flags int) (errc int, fh uint64) {
-	_, span := f.tracer.Start(context.TODO(), "Open")
+	_, span := tracer.Start(context.TODO(), "fuse.Open")
 	defer span.End()
 
 	mode := uint32(0)
@@ -349,7 +342,7 @@ func (f *SlowFS) open(path string, flags int, mode uint32) (errc int, fh uint64)
 }
 
 func (f *SlowFS) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc int) {
-	_, span := f.tracer.Start(context.TODO(), "Getattr")
+	_, span := tracer.Start(context.TODO(), "fuse.Getattr")
 	defer span.End()
 
 	stgo := syscall.Stat_t{}
@@ -374,7 +367,7 @@ func (f *SlowFS) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc int) {
 }
 
 func (f *SlowFS) Truncate(path string, size int64, fh uint64) (errc int) {
-	_, span := f.tracer.Start(context.TODO(), "Truncate")
+	_, span := tracer.Start(context.TODO(), "fuse.Truncate")
 	defer span.End()
 
 	if fh == ^uint64(0) {
@@ -398,7 +391,7 @@ func (f *SlowFS) Truncate(path string, size int64, fh uint64) (errc int) {
 }
 
 func (f *SlowFS) Read(path string, buff []byte, ofst int64, fh uint64) (rc int) {
-	_, span := f.tracer.Start(context.TODO(), "Read")
+	_, span := tracer.Start(context.TODO(), "fuse.Read")
 	defer span.End()
 
 	var err error
@@ -424,7 +417,7 @@ func (f *SlowFS) Read(path string, buff []byte, ofst int64, fh uint64) (rc int) 
 }
 
 func (f *SlowFS) Write(path string, buff []byte, ofst int64, fh uint64) (rc int) {
-	_, span := f.tracer.Start(context.TODO(), "Write")
+	_, span := tracer.Start(context.TODO(), "fuse.Write")
 	defer span.End()
 
 	var err error
@@ -451,7 +444,7 @@ func (f *SlowFS) Write(path string, buff []byte, ofst int64, fh uint64) (rc int)
 }
 
 func (f *SlowFS) Release(path string, fh uint64) (errc int) {
-	_, span := f.tracer.Start(context.TODO(), "Release")
+	_, span := tracer.Start(context.TODO(), "fuse.Release")
 	defer span.End()
 
 	errc = errno(syscall.Close(int(fh)))
@@ -469,7 +462,7 @@ func (f *SlowFS) Release(path string, fh uint64) (errc int) {
 }
 
 func (f *SlowFS) Fsync(path string, datasync bool, fh uint64) (errc int) {
-	_, span := f.tracer.Start(context.TODO(), "Fsync")
+	_, span := tracer.Start(context.TODO(), "fuse.Fsync")
 	defer span.End()
 
 	if datasync {
@@ -492,7 +485,7 @@ func (f *SlowFS) Fsync(path string, datasync bool, fh uint64) (errc int) {
 }
 
 func (f *SlowFS) Opendir(path string) (errc int, fh uint64) {
-	_, span := f.tracer.Start(context.TODO(), "Opendir")
+	_, span := tracer.Start(context.TODO(), "fuse.Opendir")
 	defer span.End()
 
 	path = filepath.Join(f.BaseDir, path)
@@ -520,7 +513,7 @@ func (f *SlowFS) Opendir(path string) (errc int, fh uint64) {
 type fillFn = func(name string, stat *fuse.Stat_t, ofst int64) bool
 
 func (f *SlowFS) Readdir(path string, fill fillFn, ofst int64, fh uint64) (errc int) {
-	_, span := f.tracer.Start(context.TODO(), "Readdir")
+	_, span := tracer.Start(context.TODO(), "fuse.Readdir")
 	defer span.End()
 
 	fault := f.Faults.GetFuseFault(path, pb.FuseOp_FUSE_READDIR)
@@ -559,7 +552,7 @@ func (f *SlowFS) Readdir(path string, fill fillFn, ofst int64, fh uint64) (errc 
 }
 
 func (f *SlowFS) Releasedir(path string, fh uint64) (errc int) {
-	_, span := f.tracer.Start(context.TODO(), "Releasedir")
+	_, span := tracer.Start(context.TODO(), "fuse.Releasedir")
 	defer span.End()
 
 	errc = errno(syscall.Close(int(fh)))
