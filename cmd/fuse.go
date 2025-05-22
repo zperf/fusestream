@@ -59,6 +59,11 @@ var fuseMountCommand = &cli.Command{
 			Name:  "mount-options",
 			Usage: "FUSE mount options",
 		},
+		&cli.BoolFlag{
+			Name:  "without-faults",
+			Usage: "FUSE mount without faults",
+			Value: false,
+		},
 	},
 	Action: func(ctx context.Context, command *cli.Command) error {
 		verbose := command.Bool("verbose")
@@ -70,7 +75,14 @@ var fuseMountCommand = &cli.Command{
 		faults := slowio.NewFaultManager()
 		server := grpc.NewServer(grpc.Creds(insecure.NewCredentials()))
 		pb.RegisterSlowIOServer(server, &slowio.Rpc{Faults: faults})
-		fs := slowio.New(command.String("base-dir"), faults)
+
+		var fs fuse.FileSystemInterface
+		baseDir := command.String("base-dir")
+		if command.Bool("without-faults") {
+			fs = slowio.NewRawFS(baseDir)
+		} else {
+			fs = slowio.NewSlowFS(baseDir, faults)
+		}
 
 		// start RPC server
 		listener, err := net.Listen("tcp", command.String("listen"))

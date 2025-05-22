@@ -6,6 +6,16 @@ import (
 	"github.com/winfsp/cgofuse/fuse"
 )
 
+type fillFn = func(name string, stat *fuse.Stat_t, ofst int64) bool
+
+func errno(err error) int {
+	if err != nil {
+		return -int(err.(syscall.Errno))
+	} else {
+		return 0
+	}
+}
+
 func setUIDAndGID() func() {
 	euid := syscall.Geteuid()
 	if euid == 0 {
