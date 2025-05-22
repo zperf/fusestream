@@ -11,12 +11,14 @@ import (
 
 type RawFS struct {
 	fuse.FileSystemBase
-	BaseDir string
+	BaseDir          string
+	DisableReadAhead bool
 }
 
 func NewRawFS(baseDir string) *RawFS {
 	return &RawFS{
-		BaseDir: baseDir,
+		BaseDir:          baseDir,
+		DisableReadAhead: true,
 	}
 }
 
@@ -139,6 +141,9 @@ func (f *RawFS) open(path string, flags int, mode uint32) (errc int, fh uint64) 
 	} else {
 		errc = 0
 		fh = uint64(fd)
+	}
+	if f.DisableReadAhead {
+		_ = fadviseRandom(fd)
 	}
 	return
 }

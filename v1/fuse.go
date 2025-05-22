@@ -22,7 +22,8 @@ type SlowFS struct {
 func NewSlowFS(baseDir string, faults *FaultManager) *SlowFS {
 	return &SlowFS{
 		RawFS: RawFS{
-			BaseDir: baseDir,
+			BaseDir:          baseDir,
+			DisableReadAhead: true,
 		},
 		Faults: faults,
 	}

@@ -4,6 +4,7 @@ import (
 	"syscall"
 
 	"github.com/winfsp/cgofuse/fuse"
+	"golang.org/x/sys/unix"
 )
 
 type fillFn = func(name string, stat *fuse.Stat_t, ofst int64) bool
@@ -14,6 +15,14 @@ func errno(err error) int {
 	} else {
 		return 0
 	}
+}
+
+func fadviseRandom(fd int) error {
+	return unix.Fadvise(fd, 0, 0, unix.FADV_RANDOM)
+}
+
+func fadviseSequential(fd int) error {
+	return unix.Fadvise(fd, 0, 0, unix.FADV_SEQUENTIAL)
 }
 
 func setUIDAndGID() func() {
