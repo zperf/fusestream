@@ -68,7 +68,7 @@ var fuseMountCommand = &cli.Command{
 	Action: func(ctx context.Context, command *cli.Command) error {
 		verbose := command.Bool("verbose")
 		if verbose {
-			InitLogging(zerolog.TraceLevel)
+			slowio.InitLogging(zerolog.TraceLevel)
 		}
 		syscall.Umask(0)
 
