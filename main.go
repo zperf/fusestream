@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"errors"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 
@@ -24,6 +26,16 @@ func main() {
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
+
+	debug := os.Getenv("SLOWIO_DEBUG")
+	if debug != "" {
+		go func() {
+			err := http.ListenAndServe(debug, nil)
+			if err != nil {
+				log.Fatal().Err(err).Str("listen", debug).Msg("http listen failed")
+			}
+		}()
+	}
 
 	exportPath := os.Getenv("SLOWIO_EXPORT_PATH")
 	if exportPath == "" {
