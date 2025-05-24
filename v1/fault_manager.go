@@ -103,6 +103,7 @@ type FaultManager struct {
 	fuseFaultMap map[FuseFaultKey]*FuseFault // guarded by mutex
 	nbdFaultMap  map[pb.NbdOp]*NbdFault      // guarded by mutex
 
+	haveFault atomic.Bool
 }
 
 func NewFaultManager() *FaultManager {
@@ -118,6 +119,10 @@ func (f *FaultManager) getNextID() int32 {
 }
 
 func (f *FaultManager) GetFuseFault(path string, op pb.FuseOp) FaultExecute {
+	if !f.haveFault.Load() {
+		return zeroFault
+	}
+
 	f.mutex.RLock()
 	defer f.mutex.RUnlock()
 
@@ -152,6 +157,7 @@ func (f *FaultManager) FuseInject(s *FuseFault) int32 {
 	id := f.getNextID()
 	s.ID = id
 	f.fuseFaultMap[FuseFaultKey{s.PathRe, s.Op}] = s
+	f.haveFault.Store(true)
 	f.mutex.Unlock()
 	return id
 }
@@ -161,6 +167,7 @@ func (f *FaultManager) NbdInject(s *NbdFault) int32 {
 	id := f.getNextID()
 	s.ID = id
 	f.nbdFaultMap[s.Op] = s
+	f.haveFault.Store(true)
 	f.mutex.Unlock()
 	return id
 }
@@ -192,6 +199,8 @@ func (f *FaultManager) DeleteAll() []int32 {
 	for _, fault := range m {
 		deletedIDs = append(deletedIDs, fault.ID)
 	}
+
+	f.haveFault.Store(false)
 	return deletedIDs
 }
 
@@ -212,6 +221,10 @@ func (f *FaultManager) DeleteByPathRegex(pathRe string) []int32 {
 
 	for key := range toDelete {
 		delete(f.fuseFaultMap, key)
+	}
+
+	if len(f.fuseFaultMap) == 0 && len(f.nbdFaultMap) == 0 {
+		f.haveFault.Store(false)
 	}
 
 	return deletedIDs
@@ -239,10 +252,18 @@ func (f *FaultManager) DeleteByID(ids []int32) []int32 {
 		delete(f.fuseFaultMap, key)
 	}
 
+	if len(f.fuseFaultMap) == 0 && len(f.nbdFaultMap) == 0 {
+		f.haveFault.Store(false)
+	}
+
 	return ids
 }
 
 func (f *FaultManager) GetNbdFault(op pb.NbdOp, offset int64, len int) FaultExecute {
+	if !f.haveFault.Load() {
+		return zeroFault
+	}
+
 	f.mutex.RLock()
 	defer f.mutex.RUnlock()
 

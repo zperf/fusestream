@@ -51,14 +51,21 @@ func NewIORecord(span sdktrace.ReadOnlySpan) IORecord {
 }
 
 func (r *IORecord) FromAttributes(attrs []attribute.KeyValue) {
+	n := 0
 	for _, attr := range attrs {
 		switch attr.Key {
 		case "offset":
 			r.Offset = attr.Value.AsInt64()
+			n |= 0b1
 		case "length":
 			r.Length = int32(attr.Value.AsInt64())
+			n |= 0b10
 		case "path":
 			r.Path = attr.Value.AsString()
+			n |= 0b100
+		}
+		if n == 0b111 {
+			break
 		}
 	}
 }
