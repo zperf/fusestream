@@ -43,11 +43,13 @@ type IORecord struct {
 }
 
 func NewIORecord(span sdktrace.ReadOnlySpan) IORecord {
-	return IORecord{
+	r := IORecord{
 		Name:        span.Name(),
 		StartTimeNs: span.StartTime().UnixNano(),
 		ElapsedNs:   span.EndTime().Sub(span.StartTime()).Nanoseconds(),
 	}
+	r.FromAttributes(span.Attributes())
+	return r
 }
 
 func (r *IORecord) FromAttributes(attrs []attribute.KeyValue) {

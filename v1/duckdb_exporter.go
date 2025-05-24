@@ -6,6 +6,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/marcboeker/go-duckdb"
+	"github.com/rs/zerolog/log"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
 
@@ -65,9 +66,6 @@ func (e *DuckdbSpanExporter) ExportSpans(ctx context.Context, spans []sdktrace.R
 		}
 
 		r := NewIORecord(span)
-		if r.Name == "fuse.Read" || r.Name == "fuse.Write" {
-			r.FromAttributes(span.Attributes())
-		}
 
 		err := e.appender.AppendRow(
 			r.Name, r.StartTimeNs, r.ElapsedNs,
@@ -77,18 +75,14 @@ func (e *DuckdbSpanExporter) ExportSpans(ctx context.Context, spans []sdktrace.R
 		}
 	}
 
-	return nil
+	return e.appender.Flush()
 }
 
 func (e *DuckdbSpanExporter) Shutdown(ctx context.Context) error {
 	_ = ctx
+	log.Info().Msg("Shutting down DuckDB span exporter")
 
-	err := e.appender.Flush()
-	if err != nil {
-		return err
-	}
-
-	err = e.appender.Close()
+	err := e.appender.Close()
 	if err != nil {
 		return err
 	}

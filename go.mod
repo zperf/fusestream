@@ -9,11 +9,9 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/marcboeker/go-duckdb v1.8.5
 	github.com/negrel/assert v0.5.0
-	github.com/parquet-go/parquet-go v0.25.0
 	github.com/pojntfx/go-nbd v0.3.2
 	github.com/rodaine/table v1.3.0
 	github.com/rs/zerolog v1.34.0
-	github.com/smallnest/chanx v1.2.0
 	github.com/stretchr/testify v1.10.0
 	github.com/urfave/cli/v3 v3.3.3
 	github.com/winfsp/cgofuse v1.6.0
@@ -26,7 +24,6 @@ require (
 )
 
 require (
-	github.com/andybalholm/brotli v1.1.1 // indirect
 	github.com/apache/arrow-go/v18 v18.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
@@ -39,10 +36,6 @@ require (
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/mattn/go-runewidth v0.0.16 // indirect
-	github.com/olekukonko/errors v1.1.0 // indirect
-	github.com/olekukonko/ll v0.0.8 // indirect
-	github.com/olekukonko/tablewriter v1.0.6 // indirect
 	github.com/pierrec/lz4/v4 v4.1.22 // indirect
 	github.com/pilebones/go-udev v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
