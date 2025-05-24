@@ -1,9 +1,11 @@
 package slowio
 
 import (
+	"os"
 	"testing"
 	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/fanyang89/slowio/pb"
@@ -47,4 +49,9 @@ func (s *FaultManagerTestSuite) TestFaultManager() {
 
 	fuseFaults, _ = f.ListFaults()
 	s.Len(fuseFaults, 0)
+}
+
+func TestMain(m *testing.M) {
+	InitLogging(zerolog.InfoLevel)
+	os.Exit(m.Run())
 }

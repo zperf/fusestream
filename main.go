@@ -30,6 +30,7 @@ func main() {
 	debug := os.Getenv("SLOWIO_DEBUG")
 	if debug != "" {
 		go func() {
+			log.Info().Str("listen", debug).Msg("Debug HTTP server listening")
 			err := http.ListenAndServe(debug, nil)
 			if err != nil {
 				log.Fatal().Err(err).Str("listen", debug).Msg("http listen failed")
@@ -39,22 +40,21 @@ func main() {
 
 	exportPath := os.Getenv("SLOWIO_EXPORT_PATH")
 	if exportPath == "" {
-		log.Fatal().Msg("Environment variable SLOWIO_EXPORT_PATH not set")
-	}
-
-	exportFile, err := os.OpenFile(exportPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-	if err != nil {
-		log.Fatal().Err(err).Msg("Open export file failed")
-	}
-
-	exporter := slowio.NewParquetSpanExporter(exportFile)
-	defer func() {
-		if err := exporter.Shutdown(context.Background()); err != nil {
-			log.Error().Err(err).Msg("Shutdown exporter failed")
+		log.Warn().Msg("Environment variable SLOWIO_EXPORT_PATH not set")
+	} else {
+		exporter, err := slowio.NewDuckdbSpanExporter(exportPath)
+		if err != nil {
+			log.Fatal().Err(err).Str("exportPath", exportPath).Msg("Create duckdb exporter failed")
 		}
-	}()
 
-	slowio.SetupOTelSDK(exporter)
+		defer func() {
+			if err := exporter.Shutdown(context.Background()); err != nil {
+				log.Error().Err(err).Msg("Shutdown exporter failed")
+			}
+		}()
+
+		slowio.SetupOTelSDK(exporter)
+	}
 
 	err = cmd.RootCommand.Run(ctx, os.Args)
 	if err != nil {

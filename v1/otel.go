@@ -2,6 +2,7 @@ package slowio
 
 import (
 	"context"
+	"time"
 
 	"github.com/negrel/assert"
 	"go.opentelemetry.io/otel"
@@ -26,7 +27,7 @@ func SetupOTelSDK(exporter sdktrace.SpanExporter) {
 	assert.NoError(err)
 
 	tracerProvider := sdktrace.NewTracerProvider(
-		sdktrace.WithResource(res), sdktrace.WithBatcher(exporter))
+		sdktrace.WithResource(res), sdktrace.WithBatcher(exporter, sdktrace.WithBatchTimeout(time.Second)))
 	otel.SetTracerProvider(tracerProvider)
 	tracer = tracerProvider.Tracer(tracerName)
 	return
@@ -41,8 +42,8 @@ type IORecord struct {
 	Path        string
 }
 
-func NewIORecord(span sdktrace.ReadOnlySpan) *IORecord {
-	return &IORecord{
+func NewIORecord(span sdktrace.ReadOnlySpan) IORecord {
+	return IORecord{
 		Name:        span.Name(),
 		StartTimeNs: span.StartTime().UnixNano(),
 		ElapsedNs:   span.EndTime().Sub(span.StartTime()).Nanoseconds(),

@@ -45,7 +45,7 @@ func (f *SlowFS) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
 
 	span.SetAttributes(
 		attribute.String("path", path),
-		attribute.Int("rc", errc),
+		attribute.Int("errc", errc),
 	)
 	return
 }
@@ -353,7 +353,7 @@ func (f *SlowFS) Read(path string, buff []byte, ofst int64, fh uint64) (rc int) 
 		attribute.String("path", path),
 		attribute.Int64("offset", ofst),
 		attribute.String("fh", fmt.Sprintf("%d", fh)),
-		attribute.Int("rc", rc),
+		attribute.Int("length", rc),
 	)
 	return
 }
@@ -372,7 +372,7 @@ func (f *SlowFS) Write(path string, buff []byte, ofst int64, fh uint64) (rc int)
 		attribute.String("path", path),
 		attribute.Int64("offset", ofst),
 		attribute.String("fh", fmt.Sprintf("%d", fh)),
-		attribute.Int("rc", rc),
+		attribute.Int("length", rc),
 	)
 	return
 }
