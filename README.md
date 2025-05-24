@@ -5,6 +5,16 @@ inspired by [chaos-mesh/toda](https://github.com/chaos-mesh/toda).
 
 ## Usage
 
+### Environment
+
+```bash
+# Start the pprof HTTP server (optional)
+export SLOWIO_DEBUG=127.0.0.1:6000
+
+# Export OpenTelemetry Spans to DuckDB
+export SLOWIO_EXPORT_PATH=/tmp/slowio.ddb
+```
+
 ### FUSE
 
 ```bash
