@@ -10,6 +10,7 @@ import (
 	"github.com/aybabtme/uniplot/histogram"
 	"github.com/fatih/color"
 	"github.com/jmoiron/sqlx"
+	"github.com/negrel/assert"
 	"github.com/rodaine/table"
 	"github.com/urfave/cli/v3"
 	"golang.org/x/term"
@@ -23,6 +24,9 @@ var statCommand = &cli.Command{
 		statSummaryCommand,
 	},
 }
+
+var tableHeaderFmt = color.New(color.FgGreen, color.Underline).SprintfFunc()
+var tableColumnFmt = color.New(color.FgYellow).SprintfFunc()
 
 var consoleWidth int
 
@@ -63,6 +67,7 @@ var statSummaryCommand = &cli.Command{
 
 		printFuncTable := []printOp{
 			{"Summary", s.PrintSummary},
+			{"Random/Sequential ratio", s.PrintRandomSequentialRatioTable},
 			{"File system operation count histogram", s.PrintFileSystemOperationHistogram},
 			{"File system operation durations (unit: ms)", s.PrintFileSystemOperationElapseBarChart},
 			{"I/O size histogram", s.PrintIOSizeHistogram},
@@ -98,13 +103,10 @@ func NewFuseStat(db *sqlx.DB, w io.Writer) *FuseStat {
 }
 
 func (s *FuseStat) PrintSummary() error {
-	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
-	columnFmt := color.New(color.FgYellow).SprintfFunc()
-
 	tbl := table.New("Property", "Value").
 		WithWriter(s.w).
-		WithHeaderFormatter(headerFmt).
-		WithFirstColumnFormatter(columnFmt)
+		WithHeaderFormatter(tableHeaderFmt).
+		WithFirstColumnFormatter(tableColumnFmt)
 
 	var cnt int
 	var meanElapsed, maxElapsed, minElapsed float64
@@ -140,9 +142,9 @@ func (s *FuseStat) PrintSummary() error {
 
 	tbl.AddRow("Record count", cnt)
 	tbl.AddRow("Runtime", fmt.Sprintf("%.3fs", runtime))
-	tbl.AddRow("Mean operation runtime", fmt.Sprintf("%.3fms", meanElapsed/1000/1000))
-	tbl.AddRow("Min operation runtime", fmt.Sprintf("%.3fms", minElapsed/1000/1000))
-	tbl.AddRow("Max operation runtime", fmt.Sprintf("%.3fms", maxElapsed/1000/1000))
+	tbl.AddRow("Mean I/O time", fmt.Sprintf("%.3fms", meanElapsed/1000/1000))
+	tbl.AddRow("Min I/O time", fmt.Sprintf("%.3fms", minElapsed/1000/1000))
+	tbl.AddRow("Max I/O time", fmt.Sprintf("%.3fms", maxElapsed/1000/1000))
 	tbl.AddRow("R/W ratio", fmt.Sprintf("%.3f", rwRatio))
 
 	tbl.Print()
@@ -229,4 +231,120 @@ func (s *FuseStat) PrintIOSizeHistogram() error {
 	return histo.SkipZeroPrintf(s.w, h, histogram.Linear(histo.MaxWidth), func(v float64) string {
 		return fmt.Sprintf("%vKiB", int(v/1024))
 	})
+}
+
+func (s *FuseStat) PrintRandomSequentialRatioTable() error {
+	tbl := table.New("Path", "Random(%)", "Sequential(%)").
+		WithWriter(s.w).
+		WithHeaderFormatter(tableHeaderFmt).
+		WithFirstColumnFormatter(tableColumnFmt)
+
+	files := make([]string, 0)
+	rows, err := s.db.Query(`SELECT DISTINCT path FROM slowio_records
+		WHERE name = 'fuse.Read' OR name = 'fuse.Write'
+		ORDER BY path;`)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = rows.Close() }()
+
+	for rows.Next() {
+		var path string
+		err = rows.Scan(&path)
+		if err != nil {
+			return err
+		}
+		files = append(files, path)
+	}
+
+	for _, path := range files {
+		var rnd, seq int64
+		rnd, seq, err = s.countRandomIOs(path)
+		if err != nil {
+			return err
+		}
+		cnt := rnd + seq
+
+		tbl.AddRow(path,
+			fmt.Sprintf("%.3f", float64(rnd)/float64(cnt)*100),
+			fmt.Sprintf("%.3f", float64(seq)/float64(cnt)*100),
+		)
+	}
+
+	tbl.Print()
+	return nil
+}
+
+type ioOperation struct {
+	Op         string
+	LastOffset int64
+}
+
+func (op *ioOperation) Empty() bool {
+	return len(op.Op) == 0 && op.LastOffset == 0
+}
+
+func (op *ioOperation) Advance(name string, offset int64, length int64) bool {
+	isSeq := true
+
+	if op.Op != name {
+		isSeq = false
+		op.Op = name
+	}
+
+	if op.LastOffset != offset {
+		isSeq = false
+	}
+
+	op.LastOffset = offset + length
+
+	return isSeq
+}
+
+func (s *FuseStat) countRandomIOs(path string) (rnd int64, seq int64, err error) {
+	rnd = 0
+	seq = 0
+	err = nil
+
+	rows, err := s.db.Query(`SELECT name, "offset", length FROM slowio_records
+         WHERE path = ? AND (name = 'fuse.Read' OR name = 'fuse.Write')
+         ORDER BY start_time_ns;`, path)
+	if err != nil {
+		return
+	}
+	defer func() { _ = rows.Close() }()
+
+	ioState := ioOperation{}
+	cnt := int64(0)
+
+	for rows.Next() {
+		var name string
+		var offset int64
+		var length int32
+
+		err = rows.Scan(&name, &offset, &length)
+		if err != nil {
+			return
+		}
+
+		if ioState.Empty() {
+			ioState = ioOperation{name, offset + int64(length)}
+			// I don't think the first I/O is sequential
+		} else {
+			if ioState.Advance(name, offset, int64(length)) {
+				seq++
+			} else {
+				rnd++
+			}
+			cnt++
+		}
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return
+	}
+
+	assert.True(cnt == seq+rnd)
+	return
 }
