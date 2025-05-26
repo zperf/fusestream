@@ -19,10 +19,10 @@ export SLOWIO_EXPORT_PATH=/tmp/slowio.ddb
 
 ```bash
 # mount the file system
-slowio mount -b --base-dir /tmp/slowio --mountpoint /mnt/slowio
+slowio fuse mount -b --base-dir /tmp/slowio --mountpoint /mnt/slowio
 
 # inject fault
-slowio fault inject-latency -g 'test-file.*' -p 1 --op CREATE -l 1000ms
+slowio fuse inject-latency -g 'test-file.*' -p 1 --op CREATE -l 1000ms
 
 # list injected faults
 slowio fault list
