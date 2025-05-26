@@ -25,6 +25,7 @@ require (
 
 require (
 	github.com/apache/arrow-go/v18 v18.3.0 // indirect
+	github.com/aybabtme/uniplot v0.0.0-20151203143629-039c559e5e7e // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -48,6 +49,7 @@ require (
 	golang.org/x/mod v0.24.0 // indirect
 	golang.org/x/net v0.40.0 // indirect
 	golang.org/x/sync v0.14.0 // indirect
+	golang.org/x/term v0.32.0 // indirect
 	golang.org/x/text v0.25.0 // indirect
 	golang.org/x/tools v0.33.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect

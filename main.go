@@ -40,7 +40,7 @@ func main() {
 
 	exportPath := os.Getenv("SLOWIO_EXPORT_PATH")
 	if exportPath == "" {
-		log.Warn().Msg("Environment variable SLOWIO_EXPORT_PATH not set")
+		log.Info().Msg("Environment variable SLOWIO_EXPORT_PATH not set, spans are not exported")
 	} else {
 		exporter, err := slowio.NewDuckdbSpanExporter(exportPath)
 		if err != nil {
