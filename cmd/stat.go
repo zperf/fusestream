@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/aybabtme/uniplot/histogram"
+	"github.com/dustin/go-humanize"
 	"github.com/fatih/color"
 	"github.com/jmoiron/sqlx"
 	"github.com/negrel/assert"
@@ -103,15 +104,9 @@ func NewFuseStat(db *sqlx.DB, w io.Writer) *FuseStat {
 }
 
 func (s *FuseStat) PrintSummary() error {
-	tbl := table.New("Property", "Value").
-		WithWriter(s.w).
-		WithHeaderFormatter(tableHeaderFmt).
-		WithFirstColumnFormatter(tableColumnFmt)
-
-	var cnt int
 	var meanElapsed, maxElapsed, minElapsed float64
-	err := s.db.QueryRow("SELECT COUNT(*), MEAN(elapsed_ns), MAX(elapsed_ns), MIN(elapsed_ns) FROM slowio_records;").
-		Scan(&cnt, &meanElapsed, &maxElapsed, &minElapsed)
+	err := s.db.QueryRow("SELECT MEAN(elapsed_ns), MAX(elapsed_ns), MIN(elapsed_ns) FROM slowio_records;").
+		Scan(&meanElapsed, &maxElapsed, &minElapsed)
 	if err != nil {
 		return err
 	}
@@ -140,12 +135,44 @@ func (s *FuseStat) PrintSummary() error {
 		rwRatio = float64(reads) / float64(writes)
 	}
 
-	tbl.AddRow("Record count", cnt)
+	var totalBytes int64
+	err = s.db.QueryRow(`SELECT SUM(length) FROM slowio_records
+                   WHERE name = 'fuse.Read' OR name = 'fuse.Write';`).Scan(&totalBytes)
+	if err != nil {
+		return err
+	}
+
+	var ioCount int64
+	err = s.db.QueryRow(`SELECT COUNT(*) FROM slowio_records
+                   WHERE name = 'fuse.Read' OR name = 'fuse.Write';`).Scan(&ioCount)
+	if err != nil {
+		return err
+	}
+
+	var meanIOSize float64
+	var maxIOSize, minIOSize int64
+	err = s.db.QueryRow(`SELECT MEAN(length), MAX(length), MIN(length) FROM slowio_records
+                    WHERE name = 'fuse.Read' OR name = 'fuse.Write';`).Scan(&meanIOSize, &maxIOSize, &minIOSize)
+	if err != nil {
+		return err
+	}
+
+	tbl := table.New("Property", "Mean", "Min", "Max").WithWriter(s.w).
+		WithHeaderFormatter(tableHeaderFmt).WithFirstColumnFormatter(tableColumnFmt)
 	tbl.AddRow("Runtime", fmt.Sprintf("%.3fs", runtime))
-	tbl.AddRow("Mean I/O time", fmt.Sprintf("%.3fms", meanElapsed/1000/1000))
-	tbl.AddRow("Min I/O time", fmt.Sprintf("%.3fms", minElapsed/1000/1000))
-	tbl.AddRow("Max I/O time", fmt.Sprintf("%.3fms", maxElapsed/1000/1000))
+	tbl.AddRow("Bandwidth", fmt.Sprintf("%s/s", humanize.Bytes(uint64(float64(totalBytes)/runtime))))
+	tbl.AddRow("IOPS", fmt.Sprintf("%.3f", float64(ioCount)/runtime))
 	tbl.AddRow("R/W ratio", fmt.Sprintf("%.3f", rwRatio))
+	tbl.AddRow("I/O size",
+		fmt.Sprintf("%v", humanize.Bytes(uint64(meanIOSize))),
+		fmt.Sprintf("%v", humanize.Bytes(uint64(minIOSize))),
+		fmt.Sprintf("%v", humanize.Bytes(uint64(maxIOSize))),
+	)
+	tbl.AddRow("I/O elapsed",
+		fmt.Sprintf("%.3fms", meanElapsed/1000/1000),
+		fmt.Sprintf("%.3fms", minElapsed/1000/1000),
+		fmt.Sprintf("%.3fms", maxElapsed/1000/1000),
+	)
 
 	tbl.Print()
 	return nil
