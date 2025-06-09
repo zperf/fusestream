@@ -18,7 +18,7 @@ type DuckdbSpanExporter struct {
 
 const tableName = "slowio_records"
 
-func createTable(db *sqlx.DB) error {
+func CreateTable(db *sqlx.DB) error {
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS slowio_records (
 "name" VARCHAR, "start_time_ns" BIGINT, "elapsed_ns" BIGINT,
 "offset" BIGINT, "length" INTEGER, "path" VARCHAR)`)
@@ -38,7 +38,7 @@ func NewDuckdbSpanExporter(dsn string) (*DuckdbSpanExporter, error) {
 	db := sqlx.NewDb(sql.OpenDB(c), "duckdb")
 	exp.db = db
 
-	err = createTable(db)
+	err = CreateTable(db)
 	if err != nil {
 		return nil, err
 	}
