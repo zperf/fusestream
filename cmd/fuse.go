@@ -55,7 +55,6 @@ var fuseMountCommand = &cli.Command{
 		&cli.BoolFlag{
 			Name:  "use-ino",
 			Usage: "Use own inode values [FUSE3 only]",
-			// Windows uses FUSE not FUSE3
 			Value: runtime.GOOS != "windows",
 		},
 		&cli.StringSliceFlag{
@@ -67,8 +66,25 @@ var fuseMountCommand = &cli.Command{
 			Usage: "FUSE mount without faults",
 			Value: false,
 		},
+		&cli.StringFlag{
+			Name:    "export-path",
+			Sources: cli.NewValueSourceChain(cli.EnvVar("SLOWIO_EXPORT_PATH")),
+		},
 	},
 	Action: func(ctx context.Context, command *cli.Command) error {
+		exportPath := command.String("export-path")
+		if exportPath == "" {
+			log.Info().Msg("Export path not set, spans won't be exported")
+		} else {
+			exporter := slowio.NewSpanExporter(exportPath)
+			defer func() {
+				if err := exporter.Shutdown(context.Background()); err != nil {
+					log.Error().Err(err).Msg("Shutdown exporter failed")
+				}
+			}()
+			slowio.SetupOTelSDK(exporter)
+		}
+
 		verbose := command.Bool("verbose")
 		if verbose {
 			slowio.InitLogging(zerolog.TraceLevel)

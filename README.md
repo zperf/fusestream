@@ -8,7 +8,7 @@ inspired by [chaos-mesh/toda](https://github.com/chaos-mesh/toda).
 ### Windows
 
 ```bash
-$env:CGO_CFLAGS="-IC:\Program Files (x86)\WinFsp\inc\fuse"
+$env:CPATH="C:\Program Files (x86)\WinFsp\inc\fuse"
 ```
 
 ## Usage

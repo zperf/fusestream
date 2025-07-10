@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -15,13 +14,11 @@ import (
 	"github.com/fatih/color"
 	"github.com/jmoiron/sqlx"
 	"github.com/negrel/assert"
-	"github.com/pkg/errors"
 	"github.com/rodaine/table"
 	"github.com/urfave/cli/v3"
 	"golang.org/x/term"
 
 	"github.com/fanyang89/slowio/histo"
-	"github.com/fanyang89/slowio/v1"
 )
 
 var statCommand = &cli.Command{
@@ -29,7 +26,6 @@ var statCommand = &cli.Command{
 	Commands: []*cli.Command{
 		statSummaryCommand,
 		statExportCsvCommand,
-		statImportCsvCommand,
 	},
 }
 
@@ -53,97 +49,6 @@ func printLine() {
 type printOp struct {
 	Name string
 	Fn   func() error
-}
-
-var statImportCsvCommand = &cli.Command{
-	Name: "import-csv",
-	Flags: []cli.Flag{
-		&cli.StringFlag{
-			Name:     "dsn",
-			Required: true,
-		},
-		&cli.StringFlag{
-			Name:     "input",
-			Aliases:  []string{"i"},
-			Required: true,
-		},
-	},
-	Action: func(ctx context.Context, command *cli.Command) error {
-		dsn := command.String("dsn")
-		inputPath := command.String("input")
-		f, err := os.Open(inputPath)
-		if err != nil {
-			return err
-		}
-		defer func() { _ = f.Close() }()
-
-		db, err := sqlx.Open("duckdb", dsn)
-		if err != nil {
-			return err
-		}
-		defer func() { _ = db.Close() }()
-
-		err = slowio.CreateTable(db)
-		if err != nil {
-			return err
-		}
-
-		_, err = db.Exec(`DELETE FROM slowio_records`)
-		if err != nil {
-			return err
-		}
-
-		r := csv.NewReader(f)
-
-		// headers: start_time_ns,name,elapsed_ns,offset,length,path
-		_, err = r.Read() // skip headers
-		if err != nil {
-			return err
-		}
-
-		for {
-			record, err := r.Read()
-			if err != nil {
-				if err == io.EOF {
-					break
-				}
-				return err
-			}
-			if len(record) != 6 {
-				return fmt.Errorf("invalid record: %+v", record)
-			}
-
-			_, err = db.Exec(`INSERT INTO slowio_records (start_time_ns, name, elapsed_ns, "offset", length, path)
-VALUES (?, ?, ?, ?, ?, ?)`,
-				mustParseInt64(record[0]),
-				record[1],
-				mustParseInt64(record[2]),
-				mustParseInt64(record[3]),
-				mustParseInt(record[4]),
-				record[5])
-			if err != nil {
-				return err
-			}
-		}
-
-		return nil
-	},
-}
-
-func mustParseInt64(s string) int64 {
-	i, err := strconv.ParseInt(s, 10, 64)
-	if err != nil {
-		panic(errors.Wrap(err, s))
-	}
-	return i
-}
-
-func mustParseInt(s string) int {
-	i, err := strconv.ParseInt(s, 10, 32)
-	if err != nil {
-		panic(errors.Wrap(err, s))
-	}
-	return int(i)
 }
 
 var zeroTime = time.Time{}
