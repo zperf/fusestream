@@ -23,10 +23,10 @@ go build main.go
 
 ```bash
 # Start the pprof HTTP server (optional)
-export SLOWIO_DEBUG="127.0.0.1:6000"
+export FUSESTREAM_DEBUG="127.0.0.1:6000"
 
 # Export OpenTelemetry spans to parquet
-export SLOWIO_EXPORT_PATH="/tmp/slowio.parquet"
+export FUSESTREAM_EXPORT_PATH="/tmp/slowio.parquet"
 ```
 
 ### FUSE

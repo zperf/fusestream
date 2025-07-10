@@ -17,16 +17,16 @@ import (
 )
 
 func main() {
-	slowio.InitLogging(zerolog.InfoLevel)
+	fusestream.InitLogging(zerolog.InfoLevel)
 
 	err := godotenv.Load()
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		log.Fatal().Err(err).Msg("Load env file failed")
 	}
 
-	debugListen := os.Getenv("SLOWIO_DEBUG")
+	debugListen := os.Getenv("FUSESTREAM_DEBUG")
 	if debugListen != "" {
-		slowio.InitLogging(zerolog.TraceLevel)
+		fusestream.InitLogging(zerolog.TraceLevel)
 		go func() {
 			log.Info().Str("listen", debugListen).Msg("Debug HTTP server listening")
 			if err := http.ListenAndServe(debugListen, nil); err != nil {

@@ -97,10 +97,10 @@ var nbdServeCommand = &cli.Command{
 		}
 		defer func() { _ = fh.Close() }()
 
-		faults := slowio.NewFaultManager()
+		faults := fusestream.NewFaultManager()
 		rpcServer := grpc.NewServer(grpc.Creds(insecure.NewCredentials()))
-		pb.RegisterSlowIOServer(rpcServer, &slowio.Rpc{Faults: faults})
-		fileBackend := slowio.NewFileBackend(fh, faults)
+		pb.RegisterSlowIOServer(rpcServer, &fusestream.Rpc{Faults: faults})
+		fileBackend := fusestream.NewFileBackend(fh, faults)
 
 		options := &server.Options{
 			ReadOnly:           readOnly,

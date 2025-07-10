@@ -68,7 +68,7 @@ var fuseMountCommand = &cli.Command{
 		},
 		&cli.StringFlag{
 			Name:    "export-path",
-			Sources: cli.NewValueSourceChain(cli.EnvVar("SLOWIO_EXPORT_PATH")),
+			Sources: cli.NewValueSourceChain(cli.EnvVar("FUSESTREAM_EXPORT_PATH")),
 		},
 	},
 	Action: func(ctx context.Context, command *cli.Command) error {
@@ -76,7 +76,7 @@ var fuseMountCommand = &cli.Command{
 		if exportPath == "" {
 			log.Info().Msg("Export path not set, spans won't be exported")
 		} else {
-			exporter, err := slowio.NewSpanExporter(exportPath)
+			exporter, err := fusestream.NewSpanExporter(exportPath)
 			if err != nil {
 				return fmt.Errorf("failed to create span exporter: %w", err)
 			}
@@ -85,25 +85,25 @@ var fuseMountCommand = &cli.Command{
 					log.Error().Err(err).Msg("Shutdown exporter failed")
 				}
 			}()
-			slowio.SetupOTelSDK(exporter)
+			fusestream.SetupOTelSDK(exporter)
 		}
 
 		verbose := command.Bool("verbose")
 		if verbose {
-			slowio.InitLogging(zerolog.TraceLevel)
+			fusestream.InitLogging(zerolog.TraceLevel)
 		}
 		syscallUmask()
 
-		faults := slowio.NewFaultManager()
+		faults := fusestream.NewFaultManager()
 		server := grpc.NewServer(grpc.Creds(insecure.NewCredentials()))
-		pb.RegisterSlowIOServer(server, &slowio.Rpc{Faults: faults})
+		pb.RegisterSlowIOServer(server, &fusestream.Rpc{Faults: faults})
 
 		var fs fuse.FileSystemInterface
 		baseDir := command.String("base-dir")
 		if command.Bool("without-faults") {
-			fs = slowio.NewRawFS(baseDir)
+			fs = fusestream.NewRawFS(baseDir)
 		} else {
-			fs = slowio.NewSlowFS(baseDir, faults)
+			fs = fusestream.NewSlowFS(baseDir, faults)
 		}
 
 		// start RPC server

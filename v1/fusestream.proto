@@ -2,9 +2,9 @@ syntax = "proto3";
 
 package slowio.proto;
 
-option go_package = "github.com/fanyang89/slowio/pb";
+option go_package = "github.com/fanyang89/fusestream/pb";
 
-service SlowIO {
+service FuseStream {
   rpc ListFaults(Void) returns (ListFaultsResponse);
   rpc DeleteFault(DeleteFaultRequest) returns (DeleteFaultResponse);
   rpc InjectFuseFault(InjectFuseFaultRequest) returns (InjectFuseFaultResponse);

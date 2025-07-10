@@ -38,12 +38,12 @@ tasks:
     cmds:
       - >
         protoc
-        -I=slowio
+        -I=v1
         --go-grpc_out=paths=source_relative:pb
         --go_out=paths=source_relative:pb
-        slowio.proto
+        fusestream.proto
 
   install:
     cmds:
       - task: build
-      - install -D ./bin/slowio /usr/local/bin/slowio
+      - install -D ./bin/fusestream /usr/local/bin/fusestream

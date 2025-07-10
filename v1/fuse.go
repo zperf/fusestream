@@ -1,6 +1,6 @@
 //go:build linux || windows
 
-package slowio
+package fusestream
 
 import (
 	"context"

@@ -1,4 +1,4 @@
-package slowio
+package fusestream
 
 import (
 	"math/rand"
