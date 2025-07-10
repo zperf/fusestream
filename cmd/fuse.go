@@ -1,4 +1,4 @@
-//go:build linux
+//go:build linux || windows
 
 package cmd
 
@@ -6,7 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"syscall"
+	"runtime"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -55,7 +55,8 @@ var fuseMountCommand = &cli.Command{
 		&cli.BoolFlag{
 			Name:  "use-ino",
 			Usage: "Use own inode values [FUSE3 only]",
-			Value: true,
+			// Windows uses FUSE not FUSE3
+			Value: runtime.GOOS != "windows",
 		},
 		&cli.StringSliceFlag{
 			Name:  "mount-options",
@@ -72,7 +73,7 @@ var fuseMountCommand = &cli.Command{
 		if verbose {
 			slowio.InitLogging(zerolog.TraceLevel)
 		}
-		syscall.Umask(0)
+		syscallUmask()
 
 		faults := slowio.NewFaultManager()
 		server := grpc.NewServer(grpc.Creds(insecure.NewCredentials()))

@@ -1,4 +1,4 @@
-//go:build linux
+//go:build linux || windows
 
 package slowio
 
@@ -290,6 +290,14 @@ func (f *SlowFS) Open(path string, flags int) (errc int, fh uint64) {
 	return
 }
 
+func errno(err error) int {
+	if err != nil {
+		return -int(err.(syscall.Errno))
+	} else {
+		return 0
+	}
+}
+
 func (f *SlowFS) open(path string, flags int, mode uint32) (errc int, fh uint64) {
 	fd, e := syscall.Open(filepath.Join(f.BaseDir, path), flags, mode)
 	if e != nil {
@@ -431,6 +439,8 @@ func (f *SlowFS) Opendir(path string) (errc int, fh uint64) {
 	)
 	return
 }
+
+type fillFn = func(name string, stat *fuse.Stat_t, ofst int64) bool
 
 func (f *SlowFS) Readdir(path string, fill fillFn, ofst int64, fh uint64) (errc int) {
 	_, span := tracer.Start(context.TODO(), "fuse.Readdir")

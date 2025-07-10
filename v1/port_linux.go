@@ -1,5 +1,3 @@
-//go:build linux
-
 package slowio
 
 import (
@@ -8,16 +6,6 @@ import (
 	"github.com/winfsp/cgofuse/fuse"
 	"golang.org/x/sys/unix"
 )
-
-type fillFn = func(name string, stat *fuse.Stat_t, ofst int64) bool
-
-func errno(err error) int {
-	if err != nil {
-		return -int(err.(syscall.Errno))
-	} else {
-		return 0
-	}
-}
 
 func fadviseRandom(fd int) error {
 	return unix.Fadvise(fd, 0, 0, unix.FADV_RANDOM)
