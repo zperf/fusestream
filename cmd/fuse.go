@@ -76,7 +76,10 @@ var fuseMountCommand = &cli.Command{
 		if exportPath == "" {
 			log.Info().Msg("Export path not set, spans won't be exported")
 		} else {
-			exporter := slowio.NewSpanExporter(exportPath)
+			exporter, err := slowio.NewSpanExporter(exportPath)
+			if err != nil {
+				return fmt.Errorf("failed to create span exporter: %w", err)
+			}
 			defer func() {
 				if err := exporter.Shutdown(context.Background()); err != nil {
 					log.Error().Err(err).Msg("Shutdown exporter failed")
