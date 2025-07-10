@@ -1,7 +1,6 @@
-# SlowIO
+# FuseStream
 
-A simple tool for file system and block device fault injection tests,
-inspired by [chaos-mesh/toda](https://github.com/chaos-mesh/toda).
+A simple tool for file system fault injection tests, inspired by [chaos-mesh/toda](https://github.com/chaos-mesh/toda).
 
 ## Compile
 
@@ -9,6 +8,13 @@ inspired by [chaos-mesh/toda](https://github.com/chaos-mesh/toda).
 
 ```bash
 $env:CPATH="C:\Program Files (x86)\WinFsp\inc\fuse"
+go build main.go
+```
+
+### Linux
+
+```bash
+go build main.go
 ```
 
 ## Usage
@@ -17,10 +23,10 @@ $env:CPATH="C:\Program Files (x86)\WinFsp\inc\fuse"
 
 ```bash
 # Start the pprof HTTP server (optional)
-export SLOWIO_DEBUG=127.0.0.1:6000
+export SLOWIO_DEBUG="127.0.0.1:6000"
 
-# Export OpenTelemetry Spans to DuckDB
-export SLOWIO_EXPORT_PATH=/tmp/slowio.ddb
+# Export OpenTelemetry spans to parquet
+export SLOWIO_EXPORT_PATH="/tmp/slowio.parquet"
 ```
 
 ### FUSE
@@ -38,10 +44,6 @@ slowio fault list
 # time touch /mnt/slowio/test-file14
 0.00s user 0.00s system 0% cpu 1.002 total
 ```
-
-### NBD
-
-TBD
 
 ## OpCodes
 
@@ -71,13 +73,6 @@ TBD
 - OPENDIR
 - READDIR
 - RELEASEDIR
-
-### NBD
-
-- READAT
-- WRITEAT
-- SIZE
-- SYNC
 
 ## Licence
 
