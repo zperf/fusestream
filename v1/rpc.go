@@ -13,7 +13,7 @@ import (
 )
 
 type Rpc struct {
-	pb.UnimplementedSlowIOServer
+	pb.UnimplementedFuseStreamServer
 	Faults *FaultManager
 }
 

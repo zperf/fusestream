@@ -96,7 +96,7 @@ var fuseMountCommand = &cli.Command{
 
 		faults := fusestream.NewFaultManager()
 		server := grpc.NewServer(grpc.Creds(insecure.NewCredentials()))
-		pb.RegisterSlowIOServer(server, &fusestream.Rpc{Faults: faults})
+		pb.RegisterFuseStreamServer(server, &fusestream.Rpc{Faults: faults})
 
 		var fs fuse.FileSystemInterface
 		baseDir := command.String("base-dir")
@@ -145,7 +145,7 @@ var injectFuseDelayCommand = &cli.Command{
 		}
 		defer func() { _ = conn.Close() }()
 
-		client := pb.NewSlowIOClient(conn)
+		client := pb.NewFuseStreamClient(conn)
 
 		fault := &pb.FuseFault{
 			PathRe: command.String("path-regex"),
@@ -186,7 +186,7 @@ var injectFuseReturnValueCommand = &cli.Command{
 		}
 		defer func() { _ = conn.Close() }()
 
-		client := pb.NewSlowIOClient(conn)
+		client := pb.NewFuseStreamClient(conn)
 		rsp, err := client.InjectFuseFault(ctx, &pb.InjectFuseFaultRequest{
 			Fault: &pb.FuseFault{
 				PathRe: command.String("path-regex"),

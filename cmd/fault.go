@@ -31,7 +31,7 @@ func removeFaults(ctx context.Context, address string, request *pb.DeleteFaultRe
 		return err
 	}
 	defer func() { _ = conn.Close() }()
-	client := pb.NewSlowIOClient(conn)
+	client := pb.NewFuseStreamClient(conn)
 	_, err = client.DeleteFault(ctx, request)
 	return err
 }
@@ -88,7 +88,7 @@ var listFaultCommand = &cli.Command{
 		}
 		defer func() { _ = conn.Close() }()
 
-		client := pb.NewSlowIOClient(conn)
+		client := pb.NewFuseStreamClient(conn)
 		rsp, err := client.ListFaults(ctx, &pb.Void{})
 		if err != nil {
 			return err

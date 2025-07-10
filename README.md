@@ -26,22 +26,22 @@ go build main.go
 export FUSESTREAM_DEBUG="127.0.0.1:6000"
 
 # Export OpenTelemetry spans to parquet
-export FUSESTREAM_EXPORT_PATH="/tmp/slowio.parquet"
+export FUSESTREAM_EXPORT_PATH="/tmp/fs.parquet"
 ```
 
 ### FUSE
 
 ```bash
 # mount the file system
-slowio fuse mount -b --base-dir /tmp/slowio --mountpoint /mnt/slowio
+fusestream fuse mount -b --base-dir /tmp/fusestream --mountpoint /mnt/fusestream
 
 # inject fault
-slowio fuse inject-latency -g 'test-file.*' -p 1 --op CREATE -l 1000ms
+fusestream fuse inject-latency -g 'test-file.*' -p 1 --op CREATE -l 1000ms
 
 # list injected faults
-slowio fault list
+fusestream fault list
 
-# time touch /mnt/slowio/test-file14
+# time touch /mnt/fusestream/test-file14
 0.00s user 0.00s system 0% cpu 1.002 total
 ```
 

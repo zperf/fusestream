@@ -11,11 +11,11 @@ tasks:
 
   build:
     cmds:
-      - go build {{.GO_BUILD_FLAGS}} -o bin/slowio main.go
+      - go build {{.GO_BUILD_FLAGS}} -o bin/fusestream main.go
     sources:
       - ./**/*.go
     generates:
-      - ./bin/slowio
+      - ./bin/fusestream
 
   clean:
     cmds:
