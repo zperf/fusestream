@@ -21,7 +21,7 @@ func SetupOTelSDK(exporter sdktrace.SpanExporter) {
 	res, err := resource.New(context.Background(),
 		resource.WithAttributes(
 			semconv.ServiceNamespaceKey.String("zbs"),
-			semconv.ServiceNameKey.String("slowio"),
+			semconv.ServiceNameKey.String("fusestream"),
 		),
 	)
 	assert.NoError(err)
