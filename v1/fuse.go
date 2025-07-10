@@ -11,7 +11,7 @@ import (
 	"github.com/winfsp/cgofuse/fuse"
 	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/fanyang89/slowio/pb"
+	"github.com/zperf/fusestream/pb"
 )
 
 type SlowFS struct {

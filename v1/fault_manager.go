@@ -9,7 +9,7 @@ import (
 	"github.com/d5/tengo/v2"
 	"github.com/rs/zerolog/log"
 
-	"github.com/fanyang89/slowio/pb"
+	"github.com/zperf/fusestream/pb"
 )
 
 type FuseFaultKey struct {

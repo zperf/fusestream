@@ -18,7 +18,7 @@ import (
 	"github.com/urfave/cli/v3"
 	"golang.org/x/term"
 
-	"github.com/fanyang89/slowio/histo"
+	"github.com/zperf/fusestream/histo"
 )
 
 var statCommand = &cli.Command{

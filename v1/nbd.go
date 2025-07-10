@@ -6,7 +6,7 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/fanyang89/slowio/pb"
+	"github.com/zperf/fusestream/pb"
 )
 
 type FileBackend struct {

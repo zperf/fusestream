@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/fanyang89/slowio/pb"
+	"github.com/zperf/fusestream/pb"
 )
 
 func getKeys[K comparable, V any](m map[K]V) []K {

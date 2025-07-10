@@ -12,8 +12,8 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	"github.com/fanyang89/slowio/cmd"
-	"github.com/fanyang89/slowio/v1"
+	"github.com/zperf/fusestream/cmd"
+	"github.com/zperf/fusestream/v1"
 )
 
 func main() {

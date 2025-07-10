@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/fanyang89/slowio/pb"
+	"github.com/zperf/fusestream/pb"
 )
 
 var faultCommand = &cli.Command{

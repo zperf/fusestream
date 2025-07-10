@@ -8,7 +8,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/fanyang89/slowio/pb"
+	"github.com/zperf/fusestream/pb"
 )
 
 func TestFaultManager(t *testing.T) {

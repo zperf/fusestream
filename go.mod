@@ -1,4 +1,4 @@
-module github.com/fanyang89/slowio
+module github.com/zperf/fusestream
 
 go 1.24.3
 
