@@ -17,7 +17,7 @@ require (
 	github.com/urfave/cli/v3 v3.3.8
 	github.com/winfsp/cgofuse v1.6.0
 	github.com/xitongsys/parquet-go v1.6.2
-	github.com/xitongsys/parquet-go-source v0.0.0-20241021075129-b732d2ac9c9b
+	github.com/xitongsys/parquet-go-source v0.0.0-20200817004010-026bad9b25d0
 	go.opentelemetry.io/otel v1.37.0
 	go.opentelemetry.io/otel/sdk v1.37.0
 	go.opentelemetry.io/otel/trace v1.37.0

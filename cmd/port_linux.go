@@ -1,5 +1,9 @@
 package cmd
 
-func tryUmask() {
+import (
+	"syscall"
+)
+
+func syscallUmask() {
 	syscall.Umask(0)
 }
