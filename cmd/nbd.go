@@ -99,7 +99,7 @@ var nbdServeCommand = &cli.Command{
 
 		faults := fusestream.NewFaultManager()
 		rpcServer := grpc.NewServer(grpc.Creds(insecure.NewCredentials()))
-		pb.RegisterSlowIOServer(rpcServer, &fusestream.Rpc{Faults: faults})
+			   pb.RegisterFuseStreamServer(rpcServer, &fusestream.Rpc{Faults: faults})
 		fileBackend := fusestream.NewFileBackend(fh, faults)
 
 		options := &server.Options{
@@ -217,7 +217,7 @@ var injectNbdDelayCommand = &cli.Command{
 			return err
 		}
 		defer func() { _ = conn.Close() }()
-		client := pb.NewSlowIOClient(conn)
+			   client := pb.NewFuseStreamClient(conn)
 
 		fault := &pb.NbdFault{
 			Op: command.Value("op").(pb.NbdOp),
@@ -266,7 +266,7 @@ var injectNbdErrorCommand = &cli.Command{
 			return err
 		}
 		defer func() { _ = conn.Close() }()
-		client := pb.NewSlowIOClient(conn)
+			   client := pb.NewFuseStreamClient(conn)
 
 		fault := &pb.NbdFault{
 			Op: command.Value("op").(pb.NbdOp),
@@ -312,7 +312,7 @@ var injectNbdReturnValueCommand = &cli.Command{
 			return err
 		}
 		defer func() { _ = conn.Close() }()
-		client := pb.NewSlowIOClient(conn)
+			   client := pb.NewFuseStreamClient(conn)
 
 		fault := &pb.NbdFault{
 			Op: command.Value("op").(pb.NbdOp),
